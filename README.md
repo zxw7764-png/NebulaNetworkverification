@@ -1,6 +1,6 @@
 # Nebula 网络验证
 
-> **当前版本：2.66.4.13**（详见 [CHANGELOG.md](CHANGELOG.md)，顶部为本版变更）
+> **当前版本：2.66.4.13**（版本变更说明随发行处的更新包提供，仓库不再内置 CHANGELOG）
 
 一套基于 PHP + MySQL 的网络验证（授权）系统后端，提供客户端 API 与管理后台 API。
 通信协议为 **Nebula 3.1**：ECDH P-256 会话握手 + AES-256-GCM 信封 + seq 防重放，客户端零静态对称机密。
@@ -19,7 +19,7 @@
 | [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | 架构设计文档（分层架构 / 请求生命周期 / 安全设计对照） |
 | [docs/TEMPLATE.md](docs/TEMPLATE.md) | 界面模板开发文档（目录规范 / 小游戏 / 布局与自定义区块） |
 | [docs/SEALER.md](docs/SEALER.md) | 加密客户端生成器说明（NebulaSealClient / 加载壳 / VMProtect 壳加固） |
-| [CHANGELOG.md](CHANGELOG.md) | 版本更新日志 |
+| [LICENSE](LICENSE) | **专有软件许可协议**（允许 / 禁止范围、违法用途禁止、SDK 分发豁免、数据合规、第三方组件） |
 
 ## ⚡ 速览
 

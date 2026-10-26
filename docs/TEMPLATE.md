@@ -1,6 +1,6 @@
 # Nebula 模板开发文档
 
-> 📚 本文属 Nebula 文档中心，主索引见 [README.md](../README.md)，完整指南见 [GUIDE.md](GUIDE.md)；
+> 📚 本文属 Nebula 文档中心，主索引见 [README.md](../README.md)，完整指南见 [GUIDE.md](GUIDE.md)，**许可条款见 [LICENSE](../LICENSE)**；
 > 其他文档：[架构设计](ARCHITECTURE.md) · [API 接口](API.md) · [报文示例](API_RAW_EXAMPLES.md)（SDK 接入文档随仓库发行处提供）
 > （本文件已从 `web/Template/README.md` 迁入 docs/，原位置留有跳转壳）
 

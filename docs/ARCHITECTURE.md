@@ -1,6 +1,6 @@
 # Nebula 网络验证系统 · 架构设计文档
 
-> 📚 本文属 Nebula 文档中心，主索引见 [README.md](../README.md)，完整指南见 [GUIDE.md](GUIDE.md)；
+> 📚 本文属 Nebula 文档中心，主索引见 [README.md](../README.md)，完整指南见 [GUIDE.md](GUIDE.md)，**许可条款见 [LICENSE](../LICENSE)**；
 > 其他文档：[API 接口](API.md) · [报文示例](API_RAW_EXAMPLES.md) · [界面模板](TEMPLATE.md) · [加密客户端生成器](SEALER.md) ·
 > [C++ SDK 接入] · [C++ SDK 加固] · [Python SDK]（三套 SDK 文档随仓库发行处（Releases）sdk.zip / sdk-py.zip 提供）
 
@@ -471,7 +471,7 @@ sequenceDiagram
 3. **新增业务表涉及软件维度**：必须接入 `Tenant` 的 `apply*` / `requireTouch*` 校验
 4. **协议变更**：必须同时修改服务端 `lib/Handshake.php` / `lib/Crypto.php`、客户端 `handshake.hpp` 与 `docs/API.md`
 5. **数据库变更**：写入 `schema.sql`（新装）并在 `install/migrate.php` 的 `MIGRATIONS` 追加幂等迁移
-6. **版本发布**：更新 `lib/bootstrap.php` 的 `NB_VERSION`，并在 [`CHANGELOG.md`](../CHANGELOG.md) 顶部追加条目；
+6. **版本发布**：更新 `lib/bootstrap.php` 的 `NB_VERSION`，并在**发行说明**（随更新包提供，仓库不内置 CHANGELOG）中追加条目；
    **每次大改动（新功能 / 协议 / 数据库 / 安全 / 计费代理逻辑）必须同时制作版本更新压缩包**（制作方法见 §9.3），
    否则存量站点只能换包重装、无法在线升级——仅改版本号不打包视为未完成发布
 7. **更新包产物自检**：`releases/<版本>/` 下必须存在空白安装包 zip 与在线更新包 zip 及其 SHA-256；

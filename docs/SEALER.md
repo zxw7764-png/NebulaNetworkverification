@@ -1,6 +1,6 @@
 # Nebula 加密客户端生成器（NebulaSealClient）说明文档
 
-> 📚 本文属 Nebula 文档中心，主索引见 [README.md](../README.md)，完整指南见 [GUIDE.md](GUIDE.md)；
+> 📚 本文属 Nebula 文档中心，主索引见 [README.md](../README.md)，完整指南见 [GUIDE.md](GUIDE.md)，**许可条款见 [LICENSE](../LICENSE)**；
 > 相关文档：[架构设计](ARCHITECTURE.md) · [客户端 API](API.md) · [报文示例](API_RAW_EXAMPLES.md) · [界面模板](TEMPLATE.md)
 
 ## 1. 这是什么

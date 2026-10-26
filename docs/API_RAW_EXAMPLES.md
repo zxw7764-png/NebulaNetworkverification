@@ -1,5 +1,8 @@
 # 客户端 API 原始请求/响应 JSON（加密信封原样）
 
+> 📚 本文属 Nebula 文档中心，主索引见 [README.md](../README.md)，完整指南见 [GUIDE.md](GUIDE.md)，**许可条款见 [LICENSE](../LICENSE)**；
+> 相关文档：[架构设计](ARCHITECTURE.md) · [API 接口](API.md) · [界面模板](TEMPLATE.md) · [加密客户端生成器](SEALER.md)
+
 > ⚠️ **本文所有示例为已废弃的 3.0 信封格式，仅作历史留档。**
 > 3.1 协议（ECDH 握手 + AES-256-GCM 信封）的报文结构见 [API.md](API.md) 第一节；
 > 3.0 请求会被 3.1 服务端拒绝（`1001`）。解密后**业务 JSON 的字段结构不变**，
