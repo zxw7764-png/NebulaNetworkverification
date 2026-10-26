@@ -17,6 +17,7 @@
 | `NebulaSDK.md`（随 C# SDK 分发包提供）                    | C# SDK 接入文档（.NET 10 / WinForms；登录 / 心跳 / 离线宽限 / 功能密钥 NF1 / 运行时防护与字符串混淆） |
 | [docs/TEMPLATE.md](TEMPLATE.md)                   | 界面模板开发文档（目录规范 / 小游戏 / 交互音效 / 布局与自定义区块）                                  |
 | [docs/SEALER.md](SEALER.md) | 加密客户端生成器说明（NebulaSealClient / 加载壳 / VMProtect 壳加固） |
+| [docs/OPS.md](OPS.md) | **运维手册**（上线检查清单 / 权限基线 / 定时任务 / 升级与回滚 / 备份恢复 / 故障排查 / 安全事件处置） |
 | [LICENSE](../LICENSE) | **使用许可协议**（允许 / 禁止范围、违法用途禁止、SDK 分发豁免、数据合规、第三方组件） |
 
 > ⚖️ 本项目**不是开源软件**，采用自有的使用许可协议：可自由部署自用，但不允许二次开发、修改与再分发。使用、部署、分发前请先阅读 [LICENSE](../LICENSE) 全文。
