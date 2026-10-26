@@ -3,7 +3,7 @@
 > **当前版本：2.66.4.13**（版本变更说明随发行处的更新包提供，仓库不再内置 CHANGELOG）
 
 一套基于 PHP + MySQL 的网络验证（授权）系统后端，提供客户端 API 与管理后台 API。
-通信协议为 **Nebula 3.1**：ECDH P-256 会话握手 + AES-256-GCM 信封 + seq 防重放，客户端零静态对称机密。
+通信协议为 **Nebula 3.1.3**：ECDH P-256 会话握手 + AES-256-GCM 信封 + seq 防重放，客户端零静态对称机密。
 
 官方提供 C++ / Python / C# 三套协议同规格的 SDK和为已有EXE一键加密的客户端（**可在仓库发行处 Releases 下载**），易语言等其他语言依据接口文档直接对接。
 
@@ -14,7 +14,7 @@
 | 文档 | 内容 |
 | --- | --- |
 | **[docs/GUIDE.md](docs/GUIDE.md)** | **完整使用指南**（功能一览 / 快速部署 / 管理后台 / 客户端对接 / 常见问题） |
-| [docs/API.md](docs/API.md) | 客户端 API 完整接口文档（3.1 协议、握手、各接口字段、离线宽限协议） |
+| [docs/API.md](docs/API.md) | 客户端 API 完整接口文档（3.1.3 协议、握手、各接口字段、离线宽限协议） |
 | [docs/API_RAW_EXAMPLES.md](docs/API_RAW_EXAMPLES.md) | 请求 / 响应原始报文示例（手写协议对接逐字节参照） |
 | [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | 架构设计文档（分层架构 / 请求生命周期 / 安全设计对照） |
 | [docs/TEMPLATE.md](docs/TEMPLATE.md) | 界面模板开发文档（目录规范 / 小游戏 / 布局与自定义区块） |

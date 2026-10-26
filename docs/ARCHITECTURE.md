@@ -125,7 +125,7 @@ sequenceDiagram
     API->>CR: ECDH P-256 交换 → HKDF 派生 sk_enc / sk_mac / sk_enc_rsp
     API->>DB: nb_hsessions 落库（双方公钥 / 派生密钥 / seq 游标）
     API-->>SDK: { sid, eph_pub, ns, ts_s, sign }（ES256 签名，握手阶段防伪造服务器）
-    SDK->>API: POST action + 3.1 信封 { proto:31, sid, seq, t, data, mac, app_key }
+    SDK->>API: POST action + 3.1.3 信封 { proto:31, sid, seq, t, data, mac, app_key }
     API->>CR: parseRequest(input, allowPlain)
     Note over CR: 时间窗 ±300s → seq 防重放(5004) → HMAC(sk_mac) 验签 → AES-256-GCM 解密
     CR-->>API: 明文 data（异常 → 1001/5002/5003/5004）
@@ -150,12 +150,12 @@ sequenceDiagram
 
 ---
 
-## 3. 通信协议与安全模型（Nebula 3.1）
+## 3. 通信协议与安全模型（Nebula 3.1.3）
 
 > 3.0 静态密钥信封（AES-256-CBC + HMAC + 会话盐 `k` + 密钥平滑轮换）已**完全移除**；
-> 当前唯一协议为 3.1：ECDH 会话握手 + AES-256-GCM + seq 防重放。
+> 当前唯一协议为 3.1.3：ECDH 会话握手 + AES-256-GCM + seq 防重放。
 
-### 3.1 会话握手
+### 3.1.3 会话握手
 
 - 客户端生成临时 ECDH P-256 密钥对，明文请求 `handshake`：
   `{ app_key, eph_pub, nc, ts, mhash }`（`nc` 为 16 字节客户端随机数）
@@ -449,7 +449,7 @@ sequenceDiagram
 | 报文窃听 | AES-256-GCM（ECDH 会话密钥，客户端零静态机密） | `lib/Handshake.php`、`lib/Crypto.php` |
 | 报文篡改 | HMAC-SHA256 + `hash_equals` | `lib/Crypto.php` |
 | 重放攻击 | 时间窗 ±300s + seq 单调递增（服务端按会话游标校验，旧序号拒绝 5004） | `lib/Crypto.php` |
-| 密钥逆向后伪造请求 | 3.1 会话（sid/seq）+ token + machine_id 绑定 | `api/index.php` |
+| 密钥逆向后伪造请求 | 3.1.3 会话（sid/seq）+ token + machine_id 绑定 | `api/index.php` |
 | 伪造服务端响应 | 服务端私钥签名（ES256），客户端公钥验签 | `lib/Handshake.php`、`lib/RespSign.php` |
 | SQL 注入 | 全量预处理参数；`ORDER BY` 白名单 | `lib/Database.php` |
 | XSS | 输出转义 + CSP nonce 白名单 | `lib/bootstrap.php`、前端渲染层 |

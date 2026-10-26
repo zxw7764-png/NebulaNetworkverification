@@ -49,7 +49,7 @@
 | 🎨 界面模板    | 官网与发卡网各内置 7 套 UI 模板（小清新 / 极简留白 / 樱花 / 午夜蓝金 / 素雅纸感 / 动漫霓虹 / 可爱马卡龙），一键换肤，优先于主题色                                              |
 | 🛡️ IP 黑名单 | 单 IP / CIDR 段（IPv4/IPv6）黑名单，命中后全站所有页面与接口以自定义错误页拦截                                                                          |
 | 🗂️ 文件管理   | 文件完整性基准校验（sha256 全站比对）+ Webshell 特征挂马扫描 + 受保护文件查看/删除                                                                       |
-| 🔒 通信加密    | Nebula 3.1：ECDH P-256 会话握手 + AES-256-GCM 信封 + seq 防重放（客户端零静态对称机密）                                                       |
+| 🔒 通信加密    | Nebula 3.1.3：ECDH P-256 会话握手 + AES-256-GCM 信封 + seq 防重放（客户端零静态对称机密）                                                       |
 | 📮 响应防伪造   | 服务端私钥对每条响应签名（ES256），客户端内置公钥验签，伪造服务器在握手阶段即被识别                                                                    |
 | 🗝️ 功能密钥   | 软件级 Feature Key 仅登录成功响应下发；NF1 加密数据包（AES-256-CBC + HMAC，encrypt-then-MAC）随程序分发，patch 掉登录判定也解不开核心数据                          |
 | 🔄 协议升级    | 3.0 静态密钥信封已完全移除；会话失效（5002/5004）SDK 自动重握手，密钥不再需要人工轮换                                                                        |
@@ -243,7 +243,7 @@ mysql -u root -p < install/schema.sql
 ],
 ```
 
-1. 通信安全（可选）：Nebula 3.1 采用 **ECDH 会话握手 + AES-256-GCM 信封**，客户端零静态对称机密，**无需填写任何通信密钥**；按需配置 `security` 段（见下文「配置说明 → 通信安全」），如关闭 `enforce_crypto` 或调整明文白名单
+1. 通信安全（可选）：Nebula 3.1.3 采用 **ECDH 会话握手 + AES-256-GCM 信封**，客户端零静态对称机密，**无需填写任何通信密钥**；按需配置 `security` 段（见下文「配置说明 → 通信安全」），如关闭 `enforce_crypto` 或调整明文白名单
 
 1. 手动创建管理员（把 `<bcrypt哈希>` 换成实际值）：
 
@@ -374,7 +374,7 @@ mv admin manage_x9k2
 | 审计追溯    | 所有写操作记录操作人、IP、时间、字段变更前后值                             |
 | 输出转义    | 前端所有数据渲染前做 HTML 转义，防 XSS                             |
 | 安全响应头   | `nosniff` / `X-Frame-Options` / `Referrer-Policy`    |
-| 密钥不落地   | 3.1 无静态对称密钥：会话密钥由 ECDH 握手即态派生，仅存于服务端 `nb_hsessions`，会话过期即失效 |
+| 密钥不落地   | 3.1.3 无静态对称密钥：会话密钥由 ECDH 握手即态派生，仅存于服务端 `nb_hsessions`，会话过期即失效 |
 | 离线票据防伪  | 离线宽限票据由服务端私钥签名，客户端公钥验签；票面绑定账号 / 机器码 / 会话 / 有效期，篡改即失效 |
 
 ---
@@ -475,7 +475,7 @@ c.stopHeartbeat();
 c.logout(lr.token);
 ```
 
-- 内部已封装 Nebula 3.1 协议：ECDH P-256 会话握手、AES-256-GCM 信封、seq 防重放、ES256 响应验签（客户端零静态对称机密）
+- 内部已封装 Nebula 3.1.3 协议：ECDH P-256 会话握手、AES-256-GCM 信封、seq 防重放、ES256 响应验签（客户端零静态对称机密）
 - 内置**提示体系**：版本过期 / 可选更新 / 维护中 / 被踢顶号 / 完整性校验失败全部 SDK 自动弹窗，  
   `setUiHandler(kind, msg)` 一行接管为自定义 UI；提示中文走宽字符窗口不乱码
 - 内置**完整性自校验**：后台版本管理登记当前版本哈希/大小后，客户端启动自动比对自身 exe，被篡改即拒绝运行
@@ -489,7 +489,7 @@ c.logout(lr.token);
 
 ### 方式二：手写协议
 
-按 **Nebula 3.1** 协议实现（详见 `docs/API.md`）：
+按 **Nebula 3.1.3** 协议实现（详见 `docs/API.md`）：
 
 - **会话握手**：明文请求 `{ app_key, eph_pub, nc, ts, mhash }` → 服务端返回 `{ sid, eph_pub, ns, ts_s, sign }`，先验 ES256 签名（对象 `sid|eph_pub_S|ns|nc|ts_s`）
 - **密钥派生**：ECDH 共享 X 坐标 → HKDF（salt=`nc‖ns`，info=`nebula31-enc` / `nebula31-mac`）派生加解密与 MAC 密钥；IV = `SHA256(nc‖ns)` 前 4 字节 ‖ seq 大端 8 字节
@@ -630,7 +630,7 @@ https://你的域名/cron.php?key=<security.cron_secret，或自动生成的 log
     'time_window'    => 300,     // 时间戳容差（秒）
     'plain_whitelist'=> ['notice', 'version', 'online'],  // 允许明文的接口（init 自 3.1 起不再明文允许）
 ],
-// 说明：3.1 无静态 aes_key / sign_salt；会话密钥由 ECDH 握手派生，
+// 说明：3.1.3 无静态 aes_key / sign_salt；会话密钥由 ECDH 握手派生，
 // 签名用服务端 ES256 私钥，客户端验签公钥经 init/login 下发。
 ```
 
