@@ -207,7 +207,59 @@ Event::on('user.expire', function (array $d) {
 });
 ```
 
-再用定时任务（见发行包内 `docs/OPS.md` 的「定时任务」一节）每分钟扫这个文件去发消息。
+再用一个定时任务把它消费掉。写个独立脚本放项目根目录（比如 `expire_consumer.php`），引导方式和 `cron.php` 一样：
+
+```php
+<?php
+require_once __DIR__ . '/lib/bootstrap.php';
+
+$queue = NB_ROOT . '/data/expire_queue.log';
+$pos   = NB_ROOT . '/data/expire_queue.pos';   // 记住上次读到第几个字节
+if (!is_file($queue)) exit;
+
+$start = is_file($pos) ? (int) file_get_contents($pos) : 0;
+if (filesize($queue) <= $start) exit;          // 没有新内容，直接结束
+
+$fh = fopen($queue, 'r');
+fseek($fh, $start);
+while (($line = fgets($fh)) !== false) {
+    $d = json_decode($line, true);
+    if (is_array($d)) {
+        // 在这里发邮件 / 调企微机器人 / 写自己的库
+    }
+}
+$end = ftell($fh);
+fclose($fh);
+file_put_contents($pos, (string) $end);
+```
+
+crontab 每分钟跑一次：
+
+```cron
+* * * * * /usr/bin/php /path/to/nebula/expire_consumer.php >> /path/to/nebula/logs/expire.log 2>&1
+```
+
+两个必须知道的点：
+
+1. **位点记的是字节数**，所以队列文件只能追加，不能中途改写或重排 —— 一改位点就错位了。
+2. **队列文件要定期截断**（否则会一直长）。截断后位点必须归零，不然会卡在旧的偏移量上再也读不到新内容：
+
+```php
+if (filesize($queue) > 5 * 1024 * 1024) {   // 超过 5MB 就清空
+    file_put_contents($queue, '');
+    file_put_contents($pos, '0');
+}
+```
+
+写入端建议带上 `LOCK_EX`，避免两个请求同时到期时互相覆盖：
+
+```php
+@file_put_contents(
+    NB_ROOT . '/data/expire_queue.log',
+    json_encode($d, JSON_UNESCAPED_UNICODE) . "\n",
+    FILE_APPEND | LOCK_EX
+);
+```
 
 ### 3.5 自己造事件，给别的代码用
 
@@ -291,10 +343,69 @@ $errs = Event::errors();   // [['event' => 'user.login', 'msg' => '...'], ...]
 
 最后一行是重点：**能写 `custom.php` 就别改核心文件**。改了核心文件虽然升级时能选择保留，但之后官方修的 bug 你就拿不到了 —— 你会永久分叉在旧代码上。
 
-### 我需要的功能没有对应事件怎么办
+## 7. 没有现成事件时，还能做什么
 
-| 需求 | 建议 |
+先记住选择顺序：**能挂事件就别写新文件，能写新文件就别改核心文件。**
+
+| 你的需求 | 该动哪里 | 升级影响 |
+| --- | --- | --- |
+| 注册 / 登录 / 封禁 / 解封 / 到期 / 激活 / 心跳时做点事 | `custom.php` 里 `Event::on()` | 无。升级永不覆盖 |
+| 要一个新的 HTTP 接口给自己的程序调 | 新建 `api/handlers/<名字>.php` | 无。新文件不与上游冲突 |
+| 改登录页 / 发卡页的样子 | [界面模板](TEMPLATE.md) | 模板独立成目录 |
+| 改登录判定本身、改心跳返回字段、改加密信封 | 只能改核心文件 | **会被覆盖** |
+
+前三种都属于**加东西** —— 加出来的东西天然不会和上游撞车。只有第四种是真的「改东西」。
+
+### 7.1 加一个新接口：文件名就是路由
+
+`api/index.php` 是**约定式分发**，没有路由表：
+
+```php
+$handler = __DIR__ . '/handlers/' . $action . '.php';   // api/index.php 分发处
+```
+
+所以新建 `api/handlers/myfeature.php`，客户端发 `action=myfeature` 就会执行它 —— **不需要在 `api/index.php` 里加任何一行**。
+
+两条硬规则：
+
+**① 文件名只允许小写字母和下划线。** `action` 进来会先过一遍
+`preg_replace('/[^a-z_]/', '', strtolower($action))`，大写、中文、连字符都会被吃掉：
+`my-feature` 会变成 `myfeature`，`myFeature` 也会变成 `myfeature`。
+
+**② 鉴权要自己写。** 每个 handler 自己做，没有统一拦截：
+
+```php
+$token     = Util::str($requestData, 'token', '');
+$machineId = Util::str($requestData, 'machine_id', '');
+$v = Session::validate($token, $machineId);   // 校验失败就直接返回
+```
+
+照抄 `api/handlers/heartbeat.php` 开头几行即可；报文格式见 [API.md](API.md)。
+
+### 7.2 非要改核心文件时，先建一份改动清单
+
+升级那天你得一眼看出「哪些是我改的」。靠回忆不行，最省事的办法是改完就记一行：
+
+```bash
+echo "$(date '+%F %T') api/handlers/login.php 增加部门字段校验" >> ~/nebula-changes.txt
+```
+
+### 7.3 升级前用「完整性校验」比一次
+
+后台「完整性校验」页维护着一份文件基准（`data/file_baseline.json`）。
+
+**重建基准的正确时机**：刚部署完、或刚升级完、且确认当前代码就是你想要的状态。
+
+之后它报出的「已修改」列表，就是你和原始版本的差异。**升级前先看这份列表** —— 里面的每一个文件，升级时都会被新版本覆盖。
+
+### 7.4 撞车了怎么办
+
+| 情况 | 做法 |
 | --- | --- |
-| 想改官网/发卡网的页面 | 用[界面模板](TEMPLATE.md)，不用改代码 |
-| 想加新的 API 接口 | 在 `custom.php` 里注册监听器不够用，需要自己写独立文件从 `api/index.php` 路由 |
-| 想改登录逻辑本身 | 只能改核心文件，且升级时要保留 —— 权衡清楚再做 |
+| 你改的文件，新版本没动 | 升级时勾「保留我改过的文件」，直接保留 |
+| 你改的文件，新版本也改了 | 逐个对比合并，**不要整文件覆盖** |
+| 只是加字段 / 加接口 | 回头改写成「新文件 + 单独入口」，下次升级就不用管了 |
+
+第二行要多说一句为什么：整文件覆盖等于**永久丢掉上游在这个文件里修的 bug 和安全问题**。
+而升级器的「保留」只做整文件哈希比对、没有逐行合并 —— 一旦保留，那份文件从此就和官方版本分叉了。
+这正是 `custom.php` 存在的全部理由。
