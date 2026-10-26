@@ -36,24 +36,8 @@
 
 class Handshake
 {
-    /**
-     * 当前协议号（3.1.3）。线上字段 `proto` 取「去点十进制」：3.1.3 → 313。
-     * 旧版（3.1）为 31，客户端仍按 31 兼容识别，见各 SDK 的 proto 校验。
-     */
-    const PROTO = 313;
-
     /** 当前请求的 3.1.3 会话（openRequest 成功后设置，buildResponse 使用） */
     private static ?array $current = null;
-
-    /**
-     * 响应里要回写的 proto 值。
-     * 后台「系统设置 → 通信安全」把 security.proto_legacy 设为 true 时回落 31，
-     * 仅用于尚未升级 SDK 的存量客户端过渡期，升级完成后应关闭。
-     */
-    public static function protoOut(): int
-    {
-        return Config::get('security.proto_legacy', false) ? 31 : self::PROTO;
-    }
 
     /** 会话空闲过期时间（秒）：6 小时内没有任何请求即作废 */
     const SESSION_TTL = 21600;
@@ -383,7 +367,7 @@ class Handshake
         }
 
         return [
-            'proto'    => self::protoOut(),
+            'proto'    => 31,
             'sid'      => $sid,
             'eph_pub'  => $sEphB,
             'ns'       => base64_encode($ns),
@@ -489,12 +473,12 @@ class Handshake
         $ct   = openssl_encrypt($json, 'aes-256-gcm', self::$current['sk_enc_rsp'], OPENSSL_RAW_DATA, $iv, $tag);
         if ($ct === false) {
             // 理论上不可能（密钥/IV 都来自合法会话）；兜底返回明文结构让客户端报协议错误
-            return ['proto' => self::protoOut(), 'err' => 'gcm_encrypt_failed'];
+            return ['proto' => 31, 'err' => 'gcm_encrypt_failed'];
         }
         $data = base64_encode($iv . $ct . $tag);
 
         $resp = [
-            'proto' => self::protoOut(),
+            'proto' => 31,
             'sid'   => self::$current['sid'],
             'data'  => $data,
         ];
