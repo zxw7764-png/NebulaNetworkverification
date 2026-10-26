@@ -414,7 +414,14 @@ sequenceDiagram
   1. **空白安装包**（全新安装分发）：`php deploy/make_release.php pack --src=yanzheng/ --out=releases/<版本> --version=<版本>`
      → `releases/<版本>/nebula-<版本>.zip` + `MANIFEST.txt`（逐文件 md5）
   2. **在线更新包**（版本服务器侧发布、存量站点升级）：在版本服务器上执行 `python pack.py <版本号> <站点根目录> [输出.zip]`
-     → zip 内含 `manifest.json`（product / version / min_version / schema_version / channel / download_url / sha256 / files）+ 全量文件，并输出 SHA-256 校验值
+     → zip 内含 `manifest.json`（product / version / min_version / schema_version / channel / files / **hashes**）+ 全量文件，并输出 SHA-256 校验值
+     * `files` 是路径数组（版本服务器 `VersionManager::validateManifest` 校验该字段非空）；
+       `hashes` 是 `path => sha256` 关联数组，后台「系统更新」预检依赖它识别本站被改动的文件。
+       **缺 `hashes` 的旧包仍可升级，但预检自动降级为「全量覆盖」提示。**
+     * 排除 `deploy/`、`tests/`、`_pkg/`、`releases/`、`update-system/` 等开发与制品目录；
+       `data/`、`logs/`、`uploads/`、`pack/` 仅保留 `.gitkeep`、`.htaccess` 骨架（2026-10-26 修复：
+       此前 2.66.4.12 包误将 `deploy/make_release.php`、`tests/contract/*` 与
+       `update-system/lib/{License,VersionManager,AdminAuth}.php` 分发进客户站点根目录）
 3. **发布**：把更新包路径与 SHA-256 填入版本服务器的 `releases/<版本>/manifest.json`，
    执行 `php deploy_add_version.php`（或版本服务器后台「版本发布」）写入更新库。
    **生产环境直接用远程 API 上传**（远程版本服务器 `https://nebula.baigee.fun`，版本服务部署在**根目录**）：
@@ -422,7 +429,9 @@ sequenceDiagram
    （账号密码属内部凭据，见 `.catpaw/skills/nebula-development/SKILL.md`，不写入公开文档）
    接口会自动解析包内 manifest、落盘 `releases/<版本>/update.zip` 并写入版本库（见 `.catpaw/skills/nebula-development/SKILL.md`）
 - 增量更新包（可选）：`php deploy/make_release.php diff <旧目录> <新目录> --out=FILE.zip`
-  → 收录「新增 + 变更」文件，生成 `MANIFEST.txt`（新文件 md5 清单）与 `DELETED.txt`（应删除清单）
+  → 收录「新增 + 变更」文件，包内同时产出 `manifest.json`（带 `hashes`，后台预检用）、
+  `MANIFEST.txt`（人读的 md5 清单）与 `DELETED.txt`（应删除清单）。
+  三个都是**包内元数据**，`UpdatePackage::META_FILES` 会阻止它们被解压进站点根目录。
 - **迁移执行器**：`php install/migrate.php status|run`，以 `settings.skey='schema_version'`
   登记数据库版本，`MIGRATIONS` 表按版本升序补跑，文件缺失即终止（绝不半升级）
 
@@ -437,7 +446,7 @@ sequenceDiagram
 | 认证与权限 | `AdminAuth`（位于后台目录）、`AdminPermission`、`Session`、`SessionCookie`、`Totp`、`Auth`、`LoginMethod`、`ShopAuth`、`Tenant` |
 | 业务 | `Software`、`Policy`、`Quota`、`Points`、`Card`、`Device`、`DeviceFp`、`Heartbeat`、`Version`、`Agent`、`AgentCode`、`AgentRecharge`、`WebInteract` |
 | 商城与支付 | `Shop`、`Pay`、`UiTemplate` |
-| 运维 | `Logger`、`Audit`、`SecReport`、`FileGuard`、`Backup`、`Health`、`Deleter`、`Setting` |
+| 运维 | `Logger`、`Audit`、`SecReport`、`FileGuard`、`Backup`、`Health`、`Deleter`、`Setting`、`UpdatePackage`（升级包解析 / 哈希比对 / 保护目录） |
 | 运行时安全（2.65.32：sticky 硬证据事件 → 自动冻结设备 + 作废卡密） | `RuntimePolicy`、`RuntimeGuard`、`RuntimeRiskEngine`、`RuntimeEventService` |
 
 ---

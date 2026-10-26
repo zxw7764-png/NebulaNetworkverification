@@ -18,7 +18,8 @@
  *
  *   php make_release.php diff <old_dir> <new_dir> --out=FILE.zip [--name=xxx]
  *       生成更新包：对比两棵目录树，收录「新增 + 变更」文件，
- *       生成 MANIFEST.txt（新文件 md5 清单）与 DELETED.txt（应删除清单）。
+ *       生成 manifest.json（逐文件 sha256，后台「系统更新」预检依赖它）、
+ *       MANIFEST.txt（人读的 md5 清单）与 DELETED.txt（应删除清单）。
  *
  * 排除规则（发布包与更新包共用）：
  *   .git/ .gitignore, data/ 运行时数据（保留 .gitkeep）, logs/,
@@ -120,6 +121,73 @@ function manifest(array $files, string $root): string
         $lines[] = md5_file($abs) . '  ' . $rel;
     }
     return implode("\n", $lines) . "\n";
+}
+
+/** 逐文件 sha256（后台升级前预检据此识别本站改动） */
+function sha256Map(array $files): array
+{
+    $out = [];
+    foreach ($files as $rel => $abs) {
+        $h = @hash_file('sha256', $abs);
+        if ($h !== false) {
+            $out[str_replace('\\', '/', $rel)] = $h;
+        }
+    }
+    return $out;
+}
+
+/** 从目标树推断版本号：VERSION 文件 → version.php 的 APP_VERSION → bootstrap 的 NB_VERSION */
+function detectVersion(string $root, string $fallback = ''): string
+{
+    $vf = $root . '/VERSION';
+    if (is_file($vf)) {
+        $v = trim((string) @file_get_contents($vf));
+        if ($v !== '') {
+            return $v;
+        }
+    }
+    $vp = $root . '/version.php';
+    if (is_file($vp)) {
+        $src = (string) @file_get_contents($vp);
+        if (preg_match("/define\('APP_VERSION',\s*'([^']+)'\)/", $src, $m)) {
+            return $m[1];
+        }
+    }
+    $bs = $root . '/lib/bootstrap.php';
+    if (is_file($bs)) {
+        $src = (string) @file_get_contents($bs);
+        if (preg_match("/define\('NB_VERSION',\s*'([^']+)'\)/", $src, $m)) {
+            return $m[1];
+        }
+    }
+    return $fallback !== '' ? $fallback : date('Ymd');
+}
+
+/**
+ * 生成更新包内的 manifest.json
+ *
+ * 字段与 update-system/pack.py 保持一致：files 是路径数组（服务端
+ * VersionManager::validateManifest 依赖该字段非空），hashes 是
+ * path => sha256 的关联数组（后台 system_update_precheck 依赖它做差异识别）。
+ */
+function manifestJson(array $changed, string $newRoot, string $version): string
+{
+    return json_encode([
+        'product'        => 'nebula-verification',
+        'version'        => $version,
+        'build'          => (int) (date('Ymd') . '01'),
+        'min_version'    => '1.0.0',
+        'schema_version' => 1,
+        'channel'        => 'stable',
+        'published_at'   => date('Y-m-d H:i:s'),
+        'requirements'   => ['php' => '>=8.0', 'mysql' => '>=5.7'],
+        'files'          => array_values(array_map(
+            static fn($r) => str_replace('\\', '/', (string) $r),
+            array_keys($changed)
+        )),
+        'hashes'         => sha256Map($changed),
+        'release_notes'  => [],
+    ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT);
 }
 
 /**
@@ -244,10 +312,17 @@ switch ($cmd) {
         }
         $oldF = collect($old);
         $newF = collect($new);
+        // 用 sha256 判定变更（与 manifest.hashes 同一算法，避免两套哈希口径）
+        $oldH = sha256Map($oldF);
         $changed = [];
         foreach ($newF as $rel => $abs) {
-            if (!isset($oldF[$rel]) || md5_file($oldF[$rel]) !== md5_file($abs)) {
-                $changed[$rel] = $abs;
+            if (!isset($oldH[$rel])) {
+                $changed[$rel] = $abs;          // 新增
+                continue;
+            }
+            $h = @hash_file('sha256', $abs);
+            if ($h === false || $h !== $oldH[$rel]) {
+                $changed[$rel] = $abs;          // 变更
             }
         }
         $deleted = array_values(array_diff(array_keys($oldF), array_keys($newF)));
@@ -257,13 +332,20 @@ switch ($cmd) {
             exit(0);
         }
         $out = $opts['out'] ?? ($WWW . '/releases/update-' . date('Ymd-His') . '.zip');
+        $version = detectVersion($new, trim((string) ($opts['version'] ?? '')));
         $manifest = "# Nebula 更新清单  生成时间: " . date('Y-m-d H:i:s')
             . "\n# 变更/新增 " . count($changed) . " 个文件，删除 " . count($deleted) . " 个文件\n\n"
             . manifest($changed, $new);
         $deletedTxt = $deleted ? "# 以下文件已在新版本中删除，部署时应从服务器移除：\n" . implode("\n", $deleted) . "\n" : "# 无删除文件\n";
-        zipWrite($out, $changed, $new, ['MANIFEST.txt' => $manifest, 'DELETED.txt' => $deletedTxt]);
+        zipWrite($out, $changed, $new, [
+            // manifest.json 是后台「系统更新」的机器清单：product 标识 + 逐文件哈希，
+            // 升级前预检靠它识别「本站哪些文件被改过」，DELETED.txt 靠它清理旧文件。
+            'manifest.json' => manifestJson($changed, $new, $version),
+            'MANIFEST.txt'  => $manifest,
+            'DELETED.txt'   => $deletedTxt,
+        ]);
         echo "更新包: $out\n";
-        echo '变更/新增: ' . count($changed) . '  删除: ' . count($deleted)
+        echo '版本: ' . $version . '  变更/新增: ' . count($changed) . '  删除: ' . count($deleted)
             . '  大小: ' . round(filesize($out) / 1048576, 2) . " MB\n";
         if ($deleted) {
             echo "注意：存在应删除文件（见包内 DELETED.txt）\n";

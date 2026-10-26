@@ -19,6 +19,8 @@
 
 本文所有命令假设项目根目录为 `/www/nebula`，PHP CLI 为 `/usr/bin/php`，请按实际路径替换。
 
+> **用宝塔面板的，先看 §11「宝塔面板操作对照」。** 宝塔的路径、伪静态写法、计划任务、备份入口都和手工部署不同，另外还有四个面板专属的坑（防篡改挡日志、`.user.ini` 锁权限、PHP 禁用函数、运行目录设错）。
+
 ---
 
 ## 1. 上线前检查清单
@@ -58,6 +60,8 @@
 └── 其余          755
 ```
 
+用宝塔面板的，属主与权限在**文件 → 权限**里改，对照表与两个坑见 §11.3。
+
 设置示例（Web 进程用户为 `www`）：
 
 ```bash
@@ -92,6 +96,8 @@ chmod 750 /www/nebula/config
 | `/.git/` `/.svn/` `.env` 等隐藏项 | 源码与历史泄露 |
 
 ### 3.2 Nginx
+
+> 用宝塔面板的看 **§11.4**——宝塔的「伪静态」框只接受 `location` / `rewrite` 片段，**不接受整个 `server { }` 块**，直接粘贴示例会报错，那一节有裁剪好的版本。
 
 仓库内 `install/nginx.conf.example` 是可直接使用的完整配置，含伪静态、安全响应头与上述 deny 规则，**照着改两行（`server_name` 与 `root`）即可**：
 
@@ -161,6 +167,8 @@ done
 
 ### 4.2 接法一：crontab（推荐）
 
+> 用宝塔面板的看 **§11.5**——在「计划任务」里选 Shell 脚本，注意宝塔的 PHP 不在全局 PATH，要用 `/www/server/php/80/bin/php` 的绝对路径。
+
 ```cron
 * * * * * /usr/bin/php /www/nebula/cron.php >> /www/nebula/logs/cron.log 2>&1
 ```
@@ -215,6 +223,8 @@ php /www/nebula/install/migrate.php status  # 顺便确认库版本
 | `backup_keep` | `7` | 保留最近 N 份，超出自动删除 |
 
 **默认 7 份 × 24 小时 = 只有 7 天窗口**。数据库较大或业务敏感时，把 `backup_keep` 调到 `30`，或额外把 `data/backups/` 同步到异地。
+
+> 用宝塔面板的，建议**两套备份并行**：项目自带的这套（可后台下载、纯 PHP 不依赖 `mysqldump`）+ 宝塔「计划任务 → 备份数据库」。配置方式与保留份数见 **§11.6**。
 
 > **`backup_mode` 的三档是互斥的**：
 > - `auto`：cron 按间隔自动备份；
@@ -274,7 +284,36 @@ mysql -u 用户 -p -e "SELECT COUNT(*) FROM 库名.nb_cards;"
 
 自建部署的升级风险全部集中在两件事：**数据库结构变了没迁移**，和**客户自己改的文件被覆盖了**。
 
-### 6.1 升级前
+后台「系统更新」页已内置升级前预检：会先比对包内逐文件哈希、列出本站被改动过的文件供你逐个选择保留，再执行升级；升级中含删除旧版文件的步骤，被删与被覆盖的文件都会备份到 `logs/update_backups/<时间戳>/`。下面的手工流程是它的等价替代，也是预检不可用时（例如离线环境）的兜底做法。
+
+### 6.1 后台一键更新（推荐）
+
+前提：`config/config.php` 里配了 `update_server`，且站点已激活授权码（未激活可升级，但拿不到下载地址）。
+
+1. 进「系统设置 → 系统更新」，点「重新检查」。页面会自动跑一次**升级影响预检**，把结果摊开成四个数字：
+
+   | 指标 | 含义 |
+   | --- | --- |
+   | 将覆盖 | 本站文件与新版一致，直接替换 |
+   | 新增 | 新版新增的文件 |
+   | 你改过的 | 本站内容与新版**原版**不同 —— 就是你动过的文件 |
+   | 将删除 | 新版已移除、本站仍存在的旧文件 |
+
+2. **「你改过的」那一栏逐个决定**。默认全部勾选「保留」（不覆盖）。取消勾选表示用新版本覆盖这个文件。
+
+   - 想保留自己的改动 → 保持勾选
+   - 想回到官方版本 → 取消勾选（原文件仍会进备份目录）
+   - 不确定 → 保留，升级后按需合并
+
+3. 「将删除」默认勾选执行删除。这些文件在新版中已移除，**留着是风险**（若某文件因漏洞被移除，旧文件仍可被 URL 直接访问）。删除前会备份。
+
+4. 点更新。完成后页面显示：更新了多少文件、保留了多少、删除了多少、备份目录名。
+
+> 预检显示「此更新包未携带逐文件哈希」时，说明该包由旧版打包工具生成，无法识别本地改动，只能全量覆盖。此时建议先按 6.2.1 备份整份代码。
+
+### 6.2 手工升级（预检不可用时）
+
+#### 6.2.1 升级前
 
 ```bash
 cd /www/nebula
@@ -292,7 +331,7 @@ tar czf /tmp/nebula-code-$(date +%Y%m%d%H%M).tar.gz \
 # 4. 记录自己改过哪些文件（见 §10）
 ```
 
-### 6.2 升级中
+#### 6.2.2 升级中
 
 1. 上传新版本文件覆盖。**以下文件严禁覆盖**（覆盖即丢失）：
 
@@ -320,7 +359,7 @@ tar czf /tmp/nebula-code-$(date +%Y%m%d%H%M).tar.gz \
    rm -f logs/cache/k_*
    ```
 
-### 6.3 升级后
+#### 6.2.3 升级后
 
 ```bash
 php install/migrate.php status          # 确认版本已是最新、无待执行项
@@ -332,14 +371,21 @@ curl -s https://你的域名/api/init | head -c 300   # 接口有正常响应
 
 客户端侧：随便找一台已授权的机器登录一次，确认能正常握手与心跳。
 
-### 6.4 回滚
+### 6.3 回滚
 
 **前提：升级前做过数据库备份。**
 
 ```bash
-# 1. 代码回滚（用 6.1 的 tar 包）
+# 1. 代码回滚（两种来源，任选）
 cd /www/nebula
+#    a) 整份代码 tar 包（6.2.1 那份，最彻底）
 tar xzf /tmp/nebula-code-20261026xxxx.tar.gz
+#    b) 只回滚本次升级动过的文件（后台「一键更新」自动留的冷备份）
+ls -lt logs/update_backups/            # 按时间倒序找本次升级的目录
+cp -a logs/update_backups/20261026_130910/. .   # 按原相对路径拷回原位
+#   备份目录里的 backup_info.json 记着 from_version / to_version /
+#   files_count / files_kept / files_will_delete，可据此确认是哪一次升级。
+#   注意：被「保留」的文件不在备份里（本来就没被覆盖），无需回滚。
 
 # 2. 数据库回滚（迁移通常是加表加列，一般不需要回滚；但结构改动大的版本必须回）
 gunzip -c data/backups/nb_<升级前的时间戳>.sql.gz > /tmp/rollback.sql
@@ -352,7 +398,9 @@ rm -f logs/cache/k_*
 php install/migrate.php status
 ```
 
-> **迁移不可逆**。`migrate.php run` 之后想退回旧版，光换代码不够——旧代码可能不认新结构。所以 6.1 的数据库备份是硬性前置条件。
+> **迁移不可逆**。`migrate.php run` 之后想退回旧版，光换代码不够——旧代码可能不认新结构。所以 6.2.1 的数据库备份是硬性前置条件。
+>
+> **备份目录只写不读**：系统不会自动回滚，也没有回滚按钮。`logs/update_backups/` 是给你手工 `cp` 回来的冷备份，确认升级稳定后可以清理。
 
 ---
 
@@ -555,7 +603,210 @@ echo "$(date +%F' '%T) api/handlers/login.php 增加部门字段校验" >> ~/neb
 
 ---
 
-## 11. 责任边界
+## 11. 宝塔面板操作对照
+
+如果服务器装的是宝塔 Linux 面板，前面各节的命令都能用，但**大部分操作在面板里有对应入口**。这一节把「要做什么」映射到「在宝塔哪里点」，并把宝塔特有的几个坑单独列出来。
+
+### 11.1 路径对照
+
+宝塔的默认路径和手工部署不一样，本文其余章节的命令请按这张表替换：
+
+| 项目 | 宝塔默认值 |
+| --- | --- |
+| 站点根目录 | `/www/wwwroot/你的域名/` |
+| PHP CLI | `/www/server/php/80/bin/php`（8.0）· `/www/server/php/83/bin/php`（8.3） |
+| Nginx 站点配置 | `/www/server/panel/vhost/nginx/你的域名.conf` |
+| 宝塔自身备份目录 | `/www/backup/database/`、`/www/backup/site/` |
+| Web 运行用户 | `www` |
+
+所以「一页速查」里的命令在宝塔上要写成：
+
+```bash
+cd /www/wwwroot/你的域名
+/www/server/php/80/bin/php -r 'require "lib/bootstrap.php"; echo NB_VERSION,"\n";'
+/www/server/php/80/bin/php install/migrate.php status
+/www/server/php/80/bin/php cron.php
+```
+
+**不要**直接用 `php`——宝塔的 PHP 不在全局 PATH 里，`php -v` 报的可能是系统自带的旧版本。
+
+### 11.2 建站与 PHP 版本
+
+1. 面板 → **网站 → 添加站点**，域名填你的域名，PHP 版本选 **8.0 及以上**，数据库选 MySQL 5.7+。
+2. 站点创建后进入 **网站 → 设置 → PHP 版本**，确认版本；若要装扩展，走 **软件商店 → PHP 8.x → 设置 → 安装扩展**。
+3. 本项目需要的扩展是 `pdo_mysql`、`openssl`、`json`、`zlib`，**宝塔默认全部自带**，一般不用装。
+
+### 11.3 权限与属主
+
+面板 → **文件** → 进入站点目录 → 选中目录 → 右键 **权限**：
+
+| 目录 | 属主 | 权限 |
+| --- | --- | --- |
+| `config` | `www` | `750` |
+| `logs` `data` `uploads` | `www` | `775` |
+| 其余 | `www` | `755` |
+
+勾选「应用到子目录」。**不要图省事全选 777**，那等于把 `lib/` 也开放成可写。
+
+### 11.4 伪静态：这里有个必须知道的限制
+
+宝塔的「伪静态」输入框**只接受 `location` / `rewrite` / `if` 片段，不接受整个 `server { }` 块**。直接粘贴 `install/nginx.conf.example` 会报错。
+
+正确做法：网站 → 设置 → **伪静态**，填入下面这段（已从示例中裁掉 `server` 外壳、`listen`、`server_name`、`root`、`index` 和 PHP 处理段——这些宝塔已经配好了）：
+
+```nginx
+# 禁止访问敏感目录
+location ~ ^/(config|lib|logs|data)/ {
+    deny all;
+    return 404;
+}
+
+# 禁止 uploads 目录执行 PHP
+location ~ ^/uploads/.*\.php$ {
+    deny all;
+    return 404;
+}
+
+# install/ 下只放行安装向导
+location = /install/install.php { }
+location ~ ^/install/.*\.php$ {
+    deny all;
+    return 404;
+}
+
+# 禁止直接访问 handlers 目录
+location ~ ^/(后台目录|agent)/handlers/ {
+    deny all;
+    return 404;
+}
+
+# 禁止访问备份/日志/源码备份文件
+location ~* \.(sql|log|md|lock|ini|sh|bak|old|swp)$ {
+    deny all;
+    return 404;
+}
+
+# 禁止访问隐藏文件
+location ~ /\.(?!well-known) {
+    deny all;
+    access_log off;
+    log_not_found off;
+    return 404;
+}
+
+# 客户端 API 美化路由
+location ~ ^/api/([a-z_]+)/?$ {
+    rewrite ^/api/([a-z_]+)/?$ /api/index.php?action=$1 last;
+}
+
+# 管理 API 美化路由
+location ~ ^/后台目录/([a-z_]{2,32})/?$ {
+    rewrite ^/后台目录/([a-z_]{2,32})/?$ /后台目录/index.php?action=$1 last;
+}
+
+# 后台页面入口：必须用 rewrite last，不能用 try_files
+location = /后台目录/ {
+    rewrite ^ /后台目录/home.php last;
+}
+location = /后台目录 {
+    return 301 /后台目录/;
+}
+
+location ^~ /后台目录/assets/ {
+    expires 7d;
+    add_header Cache-Control "public";
+}
+```
+
+把 `后台目录` 换成你实际的后台目录名（`nbXXXXXX` 那个）。
+
+> **`location = /后台目录/` 必须用 `rewrite ... last`**。写成 `try_files` 会把 `home.php` 当静态文件返回，**PHP 源码被直接下载**，数据库密码泄露。宝塔的「网站目录」里如果误开了「防跨站攻击」之外的静态化选项，也要注意不要把 PHP 当静态。
+
+配完保存，**一定要按 §3.4 从外网实测**那几个敏感路径是否 404。
+
+### 11.5 计划任务
+
+面板 → **计划任务 → 添加任务**：
+
+| 字段 | 填写 |
+| --- | --- |
+| 任务类型 | Shell 脚本 |
+| 任务名称 | Nebula 定时任务 |
+| 执行周期 | N 分钟 → **1 分钟** |
+| 脚本内容 | `/www/server/php/80/bin/php /www/wwwroot/你的域名/cron.php` |
+
+`cron.php` 内部按「到点才做」节流，每分钟跑不会重复备份。
+
+如果不想用 Shell，也可以把类型选成 **访问URL**，URL 填：
+
+```
+https://你的域名/cron.php?key=你的cron密钥
+```
+
+> 宝塔的计划任务如果配成「访问URL」且站点开了强制 HTTPS，URL 必须写 `https://`，否则 301 之后 POST 变 GET 会校验失败。
+
+配完当天就要验证，别等到月底发现备份从没跑过：
+
+```bash
+tail -20 /www/wwwroot/你的域名/logs/cron.log
+ls -lh /www/wwwroot/你的域名/data/backups/
+```
+
+### 11.6 备份：两套并行更稳
+
+宝塔自带备份和项目自带备份**互不冲突，建议同时开**：
+
+| 备份 | 在哪配 | 产物位置 | 特点 |
+| --- | --- | --- | --- |
+| 项目自带 `Backup` | 后台「系统设置 → 维护 → 数据备份」 | `data/backups/*.sql.gz` | 纯 PHP 导出，不依赖 `mysqldump`；可通过后台直接下载 |
+| 宝塔备份 | 计划任务 → 类型「备份数据库」 | `/www/backup/database/` | 面板侧可见、可一键恢复、可同步到云存储 |
+
+宝塔备份要注意「保留份数」，默认可能只留 3 份；数据库大的站点建议调到 7 以上，或者打开宝塔的「备份到腾讯云/阿里云」。
+
+### 11.7 SSL 与强制 HTTPS
+
+网站 → 设置 → **SSL** → Let's Encrypt → 申请 → 开启 **强制 HTTPS**。
+
+开完再回 §1 检查清单第 7 项确认一遍。客户端如果配了域名证书指纹（证书锁定），**换证书后必须同步更新指纹**，否则全部客户端连不上。
+
+### 11.8 宝塔特有的四个坑
+
+**①「防篡改」插件会挡住日志和缓存写入**
+
+宝塔专业版/企业版的「网站防篡改」会锁定站点文件，导致 `logs/`、`data/`、`logs/cache/` 写不进去，表现为：日志不增长、备份全失败、后台改设置不生效。
+
+处理：在防篡改里把 `logs`、`data`、`uploads` 三个目录加入**白名单**，或直接对该站点关闭防篡改。
+
+**②`.user.ini` 会锁住目录属主**
+
+宝塔开启「防跨站攻击（open_basedir）」后，会在站点根生成 `.user.ini`，属主可能是 `root`。之后你在「文件」里改权限会提示失败，或者改了不生效。
+
+处理：先把「防跨站攻击」关一下，改完权限再开；或命令行里用 `chattr -i .user.ini` 解锁后调整。
+
+**③PHP 禁用函数**
+
+宝塔默认禁用 `exec`、`shell_exec`、`system`、`passthru`、`proc_open` 等函数。
+
+**本项目不受影响**——数据库备份是纯 PHP 实现的导流压缩，不调用 `mysqldump`，也不需要 `exec`。这也是它能在共享主机和受限面板下正常备份的原因。但如果客户自己写的扩展代码用了这些函数，会静默失败。
+
+**④运行目录设错**
+
+宝塔「网站目录」里有个「运行目录」，如果它被设成了 `public` 之类的子目录，`open_basedir` 会把范围限制在那里，`config/config.php` 就读不到，表现为整站 500。
+
+处理：运行目录保持为站点根目录 `/`。
+
+### 11.9 面板自身的安全
+
+后台被爆破的案例里，有相当一部分是**面板先被拿下**。上线前至少做这四件事：
+
+1. 面板设置 → **改掉默认端口 8888**；
+2. 面板设置 → 开启 **面板 SSL**；
+3. 面板设置 → **绑定访问域名**（不要用 IP 直连）；
+4. 面板设置 → 开启 **二次验证**，并限制授权 IP。
+
+面板一破，服务器上所有站点、所有数据库都在对方手里——比验证后台被破严重得多。
+
+## 12. 责任边界
 
 | 事项 | 责任方 |
 | --- | --- |
@@ -590,7 +841,7 @@ php install/migrate.php status
 # 手动备份
 php -r 'require "lib/bootstrap.php"; print_r(Backup::run());'
 
-# 清配置缓存
+# 清运行时策略缓存
 rm -f logs/cache/k_*
 
 # 跑一次定时任务（手动触发，用于验证）
@@ -601,4 +852,15 @@ tail -50 logs/error.log
 
 # 看 cron 是否在跑
 tail -20 logs/cron.log
+```
+
+宝塔面板版（PHP 不在全局 PATH，必须用绝对路径，见 §11.1）：
+
+```bash
+cd /www/wwwroot/你的域名
+PHP=/www/server/php/80/bin/php
+
+$PHP -r 'require "lib/bootstrap.php"; echo NB_VERSION,"\n";'
+$PHP install/migrate.php status
+$PHP cron.php
 ```

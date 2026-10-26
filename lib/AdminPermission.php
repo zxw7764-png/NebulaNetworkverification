@@ -230,6 +230,7 @@ final class AdminPermission
 
         // ---- 系统更新（对接 update-system 在线版本更新） ----
         'system_update_check'   => self::SETTINGS_INFRA,
+        'system_update_precheck' => self::SETTINGS_INFRA,
         'system_update_save'    => self::SETTINGS_INFRA,
         'system_update_do'      => self::SETTINGS_INFRA,
         'license_manage'        => self::SETTINGS_INFRA,
