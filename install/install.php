@@ -705,11 +705,15 @@ h3 { font-size: 15px; margin-bottom: 12px; color: #f1f5f9; }
                         <input name="admin_path" value="nb<?= substr(bin2hex(random_bytes(4)), 0, 6) ?>" required pattern="[A-Za-z][A-Za-z0-9_-]{2,31}">
                         <div class="tip">⚠ 必须修改（不可用默认 admin）：3-32 位，字母开头，仅字母/数字/-/_。<br>同时请确保 nginx 配置中引用 /admin/ 的规则同步更新（安装程序会自动改写项目内的 nginx.htaccess）。</div>
                     </div>
-                    <h3 style="margin-top:24px">授权激活码（选填，推荐填写）</h3>
+                    <h3 style="margin-top:24px">授权激活码（选填 · 可留空跳过）</h3>
                     <div class="field">
-                        <input name="license_key" placeholder="32 位授权码（可留空，稍后激活）" class="mono" style="letter-spacing:1px"
+                        <input name="license_key" placeholder="32 位授权码；留空也能继续安装" class="mono" style="letter-spacing:1px"
                                oninput="this.value=this.value.toLowerCase().replace(/[^0-9a-f]/g,'')" maxlength="32">
-                        <div class="tip">安装完成后将自动绑定当前域名并激活；未激活不影响使用，但后续无法在线获取新版本。可到 <a href="https://nebula.baigee.fun" target="_blank" rel="noopener" style="color:#c4b5fd;text-decoration:underline">官方门户</a> 免费获取试用授权码。</div>
+                        <div class="tip">
+                            <b>留空不影响安装</b>，也不影响任何本地功能：登录验证 / 卡密 / 发卡 / 加密客户端全部照常使用。<br>
+                            <b>不填的后果</b>：① 无法在线检查与下载新版本；② 拿不到后续安全补丁，须手动换包升级；③ 后台「系统更新」会持续提示未激活。<br>
+                            安装完成后可在成功页补填，或随时到后台「授权管理」激活。授权码可到 <a href="https://nebula.baigee.fun" target="_blank" rel="noopener" style="color:#c4b5fd;text-decoration:underline">官方门户</a> 免费获取试用。
+                        </div>
                     </div>
                     <div class="alert warn" style="margin-top:16px">
                         安全要求：管理员密码必须修改（不能留空或 admin888），后台目录名必须改名 —— 否则无法继续安装。
@@ -812,13 +816,15 @@ h3 { font-size: 15px; margin-bottom: 12px; color: #f1f5f9; }
             <?php else: ?>
                 <div class="alert warn" id="licHint">
                     <?= is_array($licAct) ? '⚠ 自动激活未成功：' . htmlspecialchars($licAct['msg']) . '。' : '未填写授权码。' ?>
-                    <b>未激活不影响系统使用</b>，但后续无法在线获取新版本与安全补丁，建议尽快激活。
+                    <b>不影响使用</b> —— 登录验证、卡密、发卡、加密客户端等本地功能全部照常。
+                    只是无法在线获取新版本与安全补丁，后台「系统更新」会持续提示未激活。<br>
+                    可随时在下方补填，或之后到后台「授权管理」激活；<b>也可以直接关闭本页继续使用</b>。
                 </div>
                 <div class="alert err" id="licFail" style="display:none"></div>
                 <div style="display:flex;gap:8px;margin-top:8px">
                     <input type="text" id="licKey" class="mono" placeholder="32 位授权码" style="flex:1;min-width:0"
                            oninput="this.value=this.value.toLowerCase().replace(/[^0-9a-f]/g,'')">
-                    <button type="button" id="licBtn" onclick="doActivate()" class="btn">重新激活</button>
+                    <button type="button" id="licBtn" onclick="doActivate()" class="btn"><?= is_array($licAct) ? '重新激活' : '激活' ?></button>
                 </div>
             <?php endif; ?>
 
@@ -883,7 +889,7 @@ function doActivate() {
     var btn = document.getElementById('licBtn');
     var fail = document.getElementById('licFail');
     fail.style.display = 'none';
-    if (!key) { fail.textContent = '请输入授权码'; fail.style.display = 'block'; return; }
+    if (!key) { fail.textContent = '请先填写授权码；留空则跳过激活，直接使用系统即可'; fail.style.display = 'block'; return; }
     btn.disabled = true; btn.textContent = '激活中...';
     var fd = new FormData();
     fd.append('action', 'activate_license');
