@@ -1,5 +1,12 @@
 <?php
 /**
+ * Nebula 网络验证
+ *
+ * @copyright Copyright (c) 2026 Nebula 网络验证项目作者. All rights reserved.
+ * @license   使用许可协议（可部署自用，禁止二次开发与再分发），详见根目录 LICENSE
+ */
+
+/**
  * admin action: agent_recharge_list
  * 代理商充值卡密列表（余额充值 / 张数额度）
  * 参数: page, size, keyword(卡密/备注), kind(1余额 2额度), status(1/0), usable=1 只看真正可用的码

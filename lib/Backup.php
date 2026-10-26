@@ -1,5 +1,12 @@
 <?php
 /**
+ * Nebula 网络验证
+ *
+ * @copyright Copyright (c) 2026 Nebula 网络验证项目作者. All rights reserved.
+ * @license   使用许可协议（可部署自用，禁止二次开发与再分发），详见根目录 LICENSE
+ */
+
+/**
  * 数据备份
  * ------------------------------------------------------------------
  * 纯 PHP 导出（不依赖 mysqldump / exec，Serv00 等共享主机常常禁掉这些），

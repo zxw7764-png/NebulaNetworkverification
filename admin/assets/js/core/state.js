@@ -1,3 +1,10 @@
+/*
+ * Nebula 网络验证
+ *
+ * Copyright (c) 2026 Nebula 网络验证项目作者. All rights reserved.
+ * 使用许可协议（可部署自用，禁止二次开发与再分发），详见根目录 LICENSE
+ */
+
 const ENTRY = (window.__NB__ && window.__NB__.entry) || 'index.php';
 
 const EXTRA_HEADERS = (window.__NB__ && window.__NB__.headers) || {};

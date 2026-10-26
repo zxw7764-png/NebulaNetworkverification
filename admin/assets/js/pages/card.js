@@ -1,3 +1,10 @@
+/*
+ * Nebula 网络验证
+ *
+ * Copyright (c) 2026 Nebula 网络验证项目作者. All rights reserved.
+ * 使用许可协议（可部署自用，禁止二次开发与再分发），详见根目录 LICENSE
+ */
+
 import { api, apiDownload } from '../core/api.js';
 import { register } from '../core/router.js';
 import { pageState, resetPageState } from '../core/state.js';

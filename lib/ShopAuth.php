@@ -1,5 +1,12 @@
 <?php
 /**
+ * Nebula 网络验证
+ *
+ * @copyright Copyright (c) 2026 Nebula 网络验证项目作者. All rights reserved.
+ * @license   使用许可协议（可部署自用，禁止二次开发与再分发），详见根目录 LICENSE
+ */
+
+/**
  * ShopAuth · 发卡网买家登录态（与验证系统共用 nb_users 用户表）
  * ------------------------------------------------------------------
  * 会话：复用 portal.php 的 NBWEBSID 会话，$_SESSION['shop_uid'] 记录登录用户。

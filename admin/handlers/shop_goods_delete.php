@@ -1,5 +1,12 @@
 <?php
 /**
+ * Nebula 网络验证
+ *
+ * @copyright Copyright (c) 2026 Nebula 网络验证项目作者. All rights reserved.
+ * @license   使用许可协议（可部署自用，禁止二次开发与再分发），详见根目录 LICENSE
+ */
+
+/**
  * admin action: shop_goods_delete
  * 删除发卡商品（发卡商品独立表 nb_shop_plans，物理删除；支持批量 ids）
  * ------------------------------------------------------------------

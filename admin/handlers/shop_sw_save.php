@@ -1,5 +1,12 @@
 <?php
 /**
+ * Nebula 网络验证
+ *
+ * @copyright Copyright (c) 2026 Nebula 网络验证项目作者. All rights reserved.
+ * @license   使用许可协议（可部署自用，禁止二次开发与再分发），详见根目录 LICENSE
+ */
+
+/**
  * admin action: shop_sw_save
  * 保存某软件的发卡网覆盖（当前仅模板字段 shop_ui_template；key: shop_sw_<id>）
  * 整体覆盖语义：保存前必须先读旧覆盖一并回传（前台模板管理已处理）。

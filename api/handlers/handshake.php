@@ -1,5 +1,12 @@
 <?php
 /**
+ * Nebula 网络验证
+ *
+ * @copyright Copyright (c) 2026 Nebula 网络验证项目作者. All rights reserved.
+ * @license   使用许可协议（可部署自用，禁止二次开发与再分发），详见根目录 LICENSE
+ */
+
+/**
  * action: handshake
  * Nebula 3.1 会话握手（明文 JSON，无需加密信封）
  * 参数: app_key, eph_pub(65B点b64), nc(16B b64), ts, mhash(sha256(machine_id) hex, 可选)

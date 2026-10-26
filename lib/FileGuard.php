@@ -1,5 +1,12 @@
 <?php
 /**
+ * Nebula 网络验证
+ *
+ * @copyright Copyright (c) 2026 Nebula 网络验证项目作者. All rights reserved.
+ * @license   使用许可协议（可部署自用，禁止二次开发与再分发），详见根目录 LICENSE
+ */
+
+/**
  * FileGuard — 文件安全防护：完整性基准 / Webshell 扫描 / 受控文件操作
  * ------------------------------------------------------------------
  * · 扫描范围：站点根目录下所有 .php/.phtml/.phar/.htaccess

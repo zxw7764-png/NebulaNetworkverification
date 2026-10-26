@@ -1,5 +1,10 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
+# Nebula 网络验证
+#
+# Copyright (c) 2026 Nebula 网络验证项目作者. All rights reserved.
+# 使用许可协议（可部署自用，禁止二次开发与再分发），详见根目录 LICENSE
+
 """
 Nebula 客户端 API 契约测试
 ============================================================

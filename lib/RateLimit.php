@@ -1,5 +1,12 @@
 <?php
 /**
+ * Nebula 网络验证
+ *
+ * @copyright Copyright (c) 2026 Nebula 网络验证项目作者. All rights reserved.
+ * @license   使用许可协议（可部署自用，禁止二次开发与再分发），详见根目录 LICENSE
+ */
+
+/**
  * 限流器 - 基于数据库计数
  *
  * ⚠️ 故障语义（fail-open）：存储异常时计数失败 → 放行（可用性优先）。

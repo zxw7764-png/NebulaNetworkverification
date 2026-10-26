@@ -1,5 +1,12 @@
 <?php
 /**
+ * Nebula 网络验证
+ *
+ * @copyright Copyright (c) 2026 Nebula 网络验证项目作者. All rights reserved.
+ * @license   使用许可协议（可部署自用，禁止二次开发与再分发），详见根目录 LICENSE
+ */
+
+/**
  * admin action: agent_list
  * 代理商列表
  * 参数: page, size, keyword(账号/名称/联系方式), status(1/0), mode(1/2/3), all=1 只取下拉选项

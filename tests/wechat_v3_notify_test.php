@@ -1,5 +1,12 @@
 <?php
 /**
+ * Nebula 网络验证
+ *
+ * @copyright Copyright (c) 2026 Nebula 网络验证项目作者. All rights reserved.
+ * @license   使用许可协议（可部署自用，禁止二次开发与再分发），详见根目录 LICENSE
+ */
+
+/**
  * 微信 V3 回调重写验证（wechatVerifyNotify）
  * 用 stream wrapper 模拟 php://input，自签证书模拟平台证书，进程内多用例。
  * 运行：php tests/wechat_v3_notify_test.php  （期望 13 PASS / 0 FAIL）

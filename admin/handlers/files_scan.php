@@ -1,5 +1,12 @@
 <?php
 /**
+ * Nebula 网络验证
+ *
+ * @copyright Copyright (c) 2026 Nebula 网络验证项目作者. All rights reserved.
+ * @license   使用许可协议（可部署自用，禁止二次开发与再分发），详见根目录 LICENSE
+ */
+
+/**
  * admin action: files_scan
  * 挂马 / Webshell 扫描：
  *   · 特征规则匹配（eval/命令执行/请求变量动态调用/混淆长串等，评分制）

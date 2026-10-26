@@ -1,5 +1,12 @@
 <?php
 /**
+ * Nebula 网络验证
+ *
+ * @copyright Copyright (c) 2026 Nebula 网络验证项目作者. All rights reserved.
+ * @license   使用许可协议（可部署自用，禁止二次开发与再分发），详见根目录 LICENSE
+ */
+
+/**
  * admin action: template_list
  * 界面模板管理：返回自动识别的模板清单（统一开发目录 web/Template/<id>/，
  * 兼容各端 assets 模板文件夹旧位置）与两端当前生效模板。

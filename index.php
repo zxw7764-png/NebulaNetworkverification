@@ -1,5 +1,12 @@
 <?php
 /**
+ * Nebula 网络验证
+ *
+ * @copyright Copyright (c) 2026 Nebula 网络验证项目作者. All rights reserved.
+ * @license   使用许可协议（可部署自用，禁止二次开发与再分发），详见根目录 LICENSE
+ */
+
+/**
  * 站点根入口
  * 官网前端位于 /web/，这里统一跳转，方便直接访问 http://<域名>/ 进入官网。
  * 客户端接口仍在 /api/，管理后台仍在 /admin/，互不影响。

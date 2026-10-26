@@ -1,5 +1,12 @@
 <?php
 /**
+ * Nebula 网络验证
+ *
+ * @copyright Copyright (c) 2026 Nebula 网络验证项目作者. All rights reserved.
+ * @license   使用许可协议（可部署自用，禁止二次开发与再分发），详见根目录 LICENSE
+ */
+
+/**
  * Nginx 自定义错误页入口（两条触发路径）
  * ① nginx error_page 指令重定向：由 REDIRECT_STATUS 感知真实状态码
  * ② .htaccess rewrite 兜底（serv00 等不支持 error_page 的环境）：

@@ -1,5 +1,12 @@
 <?php
 /**
+ * Nebula 网络验证
+ *
+ * @copyright Copyright (c) 2026 Nebula 网络验证项目作者. All rights reserved.
+ * @license   使用许可协议（可部署自用，禁止二次开发与再分发），详见根目录 LICENSE
+ */
+
+/**
  * admin action: bigscreen
  * ------------------------------------------------------------------
  * 数据大屏：实时在线、今日概览、在线曲线、激活/新增曲线、代理销量排行、

@@ -1,5 +1,12 @@
 <?php
 /**
+ * Nebula 网络验证
+ *
+ * @copyright Copyright (c) 2026 Nebula 网络验证项目作者. All rights reserved.
+ * @license   使用许可协议（可部署自用，禁止二次开发与再分发），详见根目录 LICENSE
+ */
+
+/**
  * admin action: agent_code_list
  * 代理商激活码列表
  * 参数: page, size, keyword(激活码/名称/备注), status(1/0), usable=1 只看真正可用的码

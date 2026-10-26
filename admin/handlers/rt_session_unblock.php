@@ -1,5 +1,12 @@
 <?php
 /**
+ * Nebula 网络验证
+ *
+ * @copyright Copyright (c) 2026 Nebula 网络验证项目作者. All rights reserved.
+ * @license   使用许可协议（可部署自用，禁止二次开发与再分发），详见根目录 LICENSE
+ */
+
+/**
  * Admin handler: rt_session_unblock
  * 解除运行时会话阻断（§7 §55 审计）
  * 将 BLOCKED/RISK 状态恢复为 CLEAN，需审计记录

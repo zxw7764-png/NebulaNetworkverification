@@ -1,5 +1,12 @@
 <?php
 /**
+ * Nebula 网络验证
+ *
+ * @copyright Copyright (c) 2026 Nebula 网络验证项目作者. All rights reserved.
+ * @license   使用许可协议（可部署自用，禁止二次开发与再分发），详见根目录 LICENSE
+ */
+
+/**
  * admin action: tpl_sections_get
  * 模板布局与自定义区块读取（side=web 官网 / side=shop 发卡网）：
  * 返回某模板的区块顺序（该端入口 css 头注释 Layout: 行，未声明返回内置默认）

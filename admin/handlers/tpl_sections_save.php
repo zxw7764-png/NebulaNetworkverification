@@ -1,5 +1,12 @@
 <?php
 /**
+ * Nebula 网络验证
+ *
+ * @copyright Copyright (c) 2026 Nebula 网络验证项目作者. All rights reserved.
+ * @license   使用许可协议（可部署自用，禁止二次开发与再分发），详见根目录 LICENSE
+ */
+
+/**
  * admin action: tpl_sections_save
  * 模板布局与自定义区块保存（side=web 官网 / side=shop 发卡网，web/Template 文件夹型模板）：
  *   mode=layout   保存区块顺序 → 写回该端入口 css 头注释 Layout: 行（官网 web.css / 发卡网 shop.css；

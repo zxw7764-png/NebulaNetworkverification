@@ -1,5 +1,12 @@
 <?php
 /**
+ * Nebula 网络验证
+ *
+ * @copyright Copyright (c) 2026 Nebula 网络验证项目作者. All rights reserved.
+ * @license   使用许可协议（可部署自用，禁止二次开发与再分发），详见根目录 LICENSE
+ */
+
+/**
  * UiTemplate — 界面模板注册 / 识别接口（单一事实来源）
  *
  * 模板统一放在 web/Template/<id>/（官网 + 发卡网共用这一个目录）：

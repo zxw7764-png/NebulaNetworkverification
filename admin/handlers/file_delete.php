@@ -1,5 +1,12 @@
 <?php
 /**
+ * Nebula 网络验证
+ *
+ * @copyright Copyright (c) 2026 Nebula 网络验证项目作者. All rights reserved.
+ * @license   使用许可协议（可部署自用，禁止二次开发与再分发），详见根目录 LICENSE
+ */
+
+/**
  * admin action: file_delete
  * 删除受管文件（确认管理密码），路径白名单校验 + 运行必需文件保护。
  * 支持单删（file）与批量删（files 数组，最多 200 个）。

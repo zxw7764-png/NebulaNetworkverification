@@ -1,5 +1,12 @@
 <?php
 /**
+ * Nebula 网络验证
+ *
+ * @copyright Copyright (c) 2026 Nebula 网络验证项目作者. All rights reserved.
+ * @license   使用许可协议（可部署自用，禁止二次开发与再分发），详见根目录 LICENSE
+ */
+
+/**
  * admin action: card_export
  * 导出卡密为 txt 或 csv
  * 参数: batch_id 或 ids(逗号分隔) 或 status 筛选，format=txt|csv

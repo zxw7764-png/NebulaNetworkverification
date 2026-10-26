@@ -1,5 +1,12 @@
 <?php
 /**
+ * Nebula 网络验证
+ *
+ * @copyright Copyright (c) 2026 Nebula 网络验证项目作者. All rights reserved.
+ * @license   使用许可协议（可部署自用，禁止二次开发与再分发），详见根目录 LICENSE
+ */
+
+/**
  * Admin handler: rt_policy_save
  * 创建/更新运行时策略（§36 §55 §82 §83 §84）
  * §36: 普通代理不能任意关闭检测项，权限受 RBAC 控制
