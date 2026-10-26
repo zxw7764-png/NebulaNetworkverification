@@ -64,7 +64,7 @@ register_shutdown_function(static function () use ($action, $startMs): void {
 
 // 公开只读接口：允许 GET、允许明文、不计入每日配额。
 // 注意：init 自 3.1 起不再明文放行 —— 客户端必须先 handshake 再走 3.1 信封调用。
-// handshake = Nebula 3.1 ECDH 会话握手（明文 JSON，完整性靠响应 ES256 签名）
+// handshake = Nebula 3.1.3 ECDH 会话握手（明文 JSON，完整性靠响应 ES256 签名）
 $publicActions = ['notice', 'version', 'online', 'handshake'];
 
 // 只允许 POST（查询类接口除外）

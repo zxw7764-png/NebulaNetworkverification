@@ -60,7 +60,7 @@ POST http://<域名>/api/index.php?action=<接口名>
 ```json
 {
   "code": 0,
-  "proto": 31,
+  "proto": 313,
   "sid":    "<32位hex会话ID>",
   "eph_pub":"<base64(服务端临时公钥点)>",
   "ns":     "<base64(16字节随机数)>",
@@ -88,7 +88,7 @@ POST http://<域名>/api/index.php?action=<接口名>
 
 ```json
 {
-  "proto": 31,
+  "proto": 313,
   "sid":   "<握手返回的会话ID>",
   "seq":   1,
   "t":     1726000000,
@@ -122,7 +122,7 @@ POST http://<域名>/api/index.php?action=<接口名>
 
 ```json
 {
-  "proto": 31,
+  "proto": 313,
   "sid":   "<会话ID>",
   "data":  "<base64(iv[12] + AES-256-GCM密文 + tag[16])>",
   "code":  0,
@@ -240,7 +240,7 @@ POST http://<域名>/api/index.php?action=<接口名>
       "ticket_prefix": "G1",
       "usage": "心跳失败时，本地用 public_key 验签后可在 until 前离线运行"
     },
-    "crypto": { "proto": 31, "kex": "ECDH-P256", "algo": "AES-256-GCM", "resp_sign": "ES256" },
+    "crypto": { "proto": 313, "kex": "ECDH-P256", "algo": "AES-256-GCM", "resp_sign": "ES256" },
     "version": {
       "client_ver": "1.0.0",
       "latest": "1.1.0",

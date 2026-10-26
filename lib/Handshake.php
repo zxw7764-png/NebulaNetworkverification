@@ -7,13 +7,13 @@
  */
 
 /**
- * Nebula 3.1 会话握手（ECDH P-256 + AES-256-GCM）
+ * Nebula 3.1.3 会话握手（ECDH P-256 + AES-256-GCM）
  * ----------------------------------------------------------------------------
  * 目标：客户端不再持有任何跨会话有效的对称机密。
  *   · 客户端每次进程启动生成临时 EC 密钥对，handshake 明文上报公钥；
  *   · 服务端同样生成临时密钥对，openssl_pkey_derive 算共享密钥，
  *     HKDF 派生 sk_enc / sk_mac，落库 nb_hsessions（会话级、过期即废）；
- *   · 之后业务请求改走 3.1 信封：
+ *   · 之后业务请求改走 3.1.3 信封：
  *       请求  { sid, seq, t, data, mac, app_key }
  *         data = base64( iv[12] + AES-256-GCM(业务JSON) + tag[16] )
  *         iv   = iv_prefix(4) || seq 大端8字节   —— seq 严格递增，同方向内 IV 永不重复
@@ -31,13 +31,29 @@
  *   · seq 单调递增 + 服务端原子 UPDATE 防重放；
  *   · GCM 认证加密（ AEAD），请求响应均无填充预言机问题。
  *
- * 3.0 静态密钥体系已于 2026-10-02 全面下线：请求带 sid 字段即走本类（3.1）。
+ * 3.0 静态密钥体系已于 2026-10-02 全面下线：请求带 sid 字段即走本类（3.1.3）。
  */
 
 class Handshake
 {
-    /** 当前请求的 3.1 会话（openRequest 成功后设置，buildResponse 使用） */
+    /**
+     * 当前协议号（3.1.3）。线上字段 `proto` 取「去点十进制」：3.1.3 → 313。
+     * 旧版（3.1）为 31，客户端仍按 31 兼容识别，见各 SDK 的 proto 校验。
+     */
+    const PROTO = 313;
+
+    /** 当前请求的 3.1.3 会话（openRequest 成功后设置，buildResponse 使用） */
     private static ?array $current = null;
+
+    /**
+     * 响应里要回写的 proto 值。
+     * 后台「系统设置 → 通信安全」把 security.proto_legacy 设为 true 时回落 31，
+     * 仅用于尚未升级 SDK 的存量客户端过渡期，升级完成后应关闭。
+     */
+    public static function protoOut(): int
+    {
+        return Config::get('security.proto_legacy', false) ? 31 : self::PROTO;
+    }
 
     /** 会话空闲过期时间（秒）：6 小时内没有任何请求即作废 */
     const SESSION_TTL = 21600;
@@ -367,7 +383,7 @@ class Handshake
         }
 
         return [
-            'proto'    => 31,
+            'proto'    => self::protoOut(),
             'sid'      => $sid,
             'eph_pub'  => $sEphB,
             'ns'       => base64_encode($ns),
@@ -379,7 +395,7 @@ class Handshake
     }
 
     // ------------------------------------------------------------------
-    // 3.1 业务请求解析
+    // 3.1.3 业务请求解析
     // ------------------------------------------------------------------
 
     /**
@@ -396,7 +412,7 @@ class Handshake
         $mac  = (string) ($input['mac'] ?? '');
 
         if ($sid === '' || strlen($sid) !== 32 || $seq <= 0 || $data === '') {
-            throw new CryptoException('missing_field', '3.1 信封缺少必要字段 sid/seq/data');
+            throw new CryptoException('missing_field', '3.1.3 信封缺少必要字段 sid/seq/data');
         }
 
         // 会话必须属于当前软件（跨软件会话复用直接拒绝）
@@ -406,7 +422,7 @@ class Handshake
             [$sid, Software::currentId(), time()]
         );
         if (!$row) {
-            throw new CryptoException('bad_sign', '3.1 会话无效或已过期，请重新握手');
+            throw new CryptoException('bad_sign', '3.1.3 会话无效或已过期，请重新握手');
         }
 
         // 时间窗口（客户端已按 ts_s 校准，60 秒足够）
@@ -473,12 +489,12 @@ class Handshake
         $ct   = openssl_encrypt($json, 'aes-256-gcm', self::$current['sk_enc_rsp'], OPENSSL_RAW_DATA, $iv, $tag);
         if ($ct === false) {
             // 理论上不可能（密钥/IV 都来自合法会话）；兜底返回明文结构让客户端报协议错误
-            return ['proto' => 31, 'err' => 'gcm_encrypt_failed'];
+            return ['proto' => self::protoOut(), 'err' => 'gcm_encrypt_failed'];
         }
         $data = base64_encode($iv . $ct . $tag);
 
         $resp = [
-            'proto' => 31,
+            'proto' => self::protoOut(),
             'sid'   => self::$current['sid'],
             'data'  => $data,
         ];

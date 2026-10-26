@@ -493,7 +493,7 @@ c.logout(lr.token);
 
 - **会话握手**：明文请求 `{ app_key, eph_pub, nc, ts, mhash }` → 服务端返回 `{ sid, eph_pub, ns, ts_s, sign }`，先验 ES256 签名（对象 `sid|eph_pub_S|ns|nc|ts_s`）
 - **密钥派生**：ECDH 共享 X 坐标 → HKDF（salt=`nc‖ns`，info=`nebula31-enc` / `nebula31-mac`）派生加解密与 MAC 密钥；IV = `SHA256(nc‖ns)` 前 4 字节 ‖ seq 大端 8 字节
-- **业务信封**：`{ proto:31, sid, seq, t, data, mac, app_key }`，`data = base64(IV[12] + AES-256-GCM 密文 + tag[16])`
+- **业务信封**：`{ proto:313, sid, seq, t, data, mac, app_key }`，`data = base64(IV[12] + AES-256-GCM 密文 + tag[16])`
 - **响应**：先验 `sig`（对象 `data|sid`）再 GCM 解密；seq 单调递增防重放
 
 ### 对接要点

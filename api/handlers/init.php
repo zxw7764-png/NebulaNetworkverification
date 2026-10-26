@@ -111,7 +111,7 @@ Response::ok([
     'runtime_protection' => RuntimePolicy::forSdkClient((int) $sw['id']),
     'crypto'         => [
         'enforce' => (bool) Config::get('security.enforce_crypto', true),
-        'proto'   => 31,
+        'proto'   => \Handshake::protoOut(),
         'algo'    => 'AES-256-GCM',
         'kex'     => 'ECDH-P256',
         'sign'    => 'ES256',
