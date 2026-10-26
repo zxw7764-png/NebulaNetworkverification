@@ -148,6 +148,21 @@ if (isset($updates['status']) && (int) $updates['status'] !== 1) {
     Session::kickUser($userId);
 }
 
+// 状态真的变了才派发事件（重复保存同一状态不应重复通知）
+if (isset($updates['status']) && (int) $updates['status'] !== (int) $user['status']) {
+    $nbStatus = (int) $updates['status'];
+    Event::emit($nbStatus === 1 ? 'user.unban' : 'user.ban', [
+        'user_id'     => $userId,
+        'username'    => (string) $user['username'],
+        'status'      => $nbStatus,
+        'status_text' => [0 => '封禁', 1 => '解封', 2 => '冻结'][$nbStatus] ?? '未知',
+        'ban_expire'  => (int) ($updates['ban_expire'] ?? 0),
+        'admin_id'    => (int) ($admin['id'] ?? 0),
+        'batch'       => false,
+        'time'        => $now,
+    ]);
+}
+
 // 审计：对比变更前后
 $oldSnap = [
     'username'    => $user['username'],

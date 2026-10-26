@@ -55,6 +55,24 @@ if ((int) $user['status'] !== 1) {
 // 会员有效性实时检查
 $vip = Auth::checkVip($user);
 if (!$vip['valid']) {
+    // 只有「真到期」才派发 user.expire，排除「从未激活」（vip_expire=0）。
+    // 去重是必须的：心跳约每分钟一次，不去重的话客户接个通知渠道就被打爆。
+    // 缓存键带到期时间戳，所以「续费后又过期」会被识别为新的到期点，能再喊一次。
+    $nbExpire = (int) $user['vip_expire'];
+    if ($nbExpire > 0 && $nbExpire < time()) {
+        $nbExpKey = 'hook:expire:' . $userId . ':' . $nbExpire;
+        if (Cache::get($nbExpKey) === null) {
+            Cache::set($nbExpKey, 1, 86400);
+            Event::emit('user.expire', [
+                'user_id'    => $userId,
+                'username'   => (string) $user['username'],
+                'vip_expire' => $nbExpire,
+                'expired_at' => $nbExpire,
+                'remain'     => 0,
+                'points'     => (int) $user['points'],
+            ]);
+        }
+    }
     Session::kickUser($userId);
     Logger::log('heartbeat', 0, $vip['msg'], ['user_id' => $userId]);
     Response::send($vip['code'], $vip['msg'], ['kick' => true, 'need_activate' => true]);
@@ -179,5 +197,18 @@ $data['flash_notices'] = Cache::remember('notice:flash_sw_' . $flashSwId, 30, st
 if ($grace !== null) {
     $data['grace'] = $grace;
 }
+
+// 心跳事件放在最后：所有会提前 return 的异常分支（踢人/阻断/解绑）都走不到这里，
+// 客户收到的心跳一定是「正常在线」的那一次。
+// 频率提醒：在线用户数 × 每分钟一次，监听器里不要做同步 HTTP 或大查询。
+Event::emit('heartbeat', [
+    'user_id'     => $userId,
+    'username'    => (string) $user['username'],
+    'machine_id'  => $machineId,
+    'remain'      => $remain,
+    'points'      => (int) $user['points'],
+    'group_id'    => (int) $user['group_id'],
+    'software_id' => (int) ($user['software_id'] ?? 0),
+]);
 
 Response::ok($data);

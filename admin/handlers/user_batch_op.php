@@ -68,6 +68,25 @@ switch ($op) {
             );
         }
         $label  = [0 => '封禁', 1 => '解封', 2 => '冻结'][$value];
+
+        // 事件：只为「状态真的变了」的用户派发。
+        // 批量勾选常含已经处于目标状态的用户（例如全选后解封），
+        // 不去重的话客户会收到一堆无效通知。
+        foreach ($users as $nbU) {
+            if ((int) $nbU['status'] === $value) {
+                continue;
+            }
+            Event::emit($value === 1 ? 'user.unban' : 'user.ban', [
+                'user_id'     => (int) $nbU['id'],
+                'username'    => (string) $nbU['username'],
+                'status'      => $value,
+                'status_text' => $label,
+                'ban_expire'  => $banExpire,
+                'admin_id'    => (int) ($admin['id'] ?? 0),
+                'batch'       => true,
+                'time'        => $now,
+            ]);
+        }
         $detail = "批量{$label} " . count($realIds) . ' 个用户' . ($banDesc ?: '');
         Audit::log($admin, 'user_batch', "用户批量({$label})", $detail,
             [], [], ['ids' => $realIds, 'value' => $value, 'ban_expire' => $banExpire]);

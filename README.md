@@ -20,6 +20,7 @@
 | [docs/TEMPLATE.md](docs/TEMPLATE.md) | 界面模板开发文档（目录规范 / 小游戏 / 布局与自定义区块） |
 | [docs/SEALER.md](docs/SEALER.md) | 加密客户端生成器说明（NebulaSealClient / 加载壳 / VMProtect 壳加固） |
 | [docs/OPS.md](docs/OPS.md) | **运维手册**（上线检查清单 / 权限基线 / 定时任务 / 升级与回滚 / 备份恢复 / 故障排查 / 安全事件处置） |
+| [docs/EXTENDING.md](docs/EXTENDING.md) | **扩展开发指南**（在 `custom.php` 里监听注册/登录/激活/封禁/到期事件，不改核心文件且升级不覆盖） |
 | [LICENSE](LICENSE) | **使用许可协议**（允许 / 禁止范围、违法用途禁止、SDK 分发豁免、数据合规、第三方组件） |
 
 ## ⚡ 速览

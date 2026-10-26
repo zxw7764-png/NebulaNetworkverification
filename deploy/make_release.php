@@ -312,6 +312,10 @@ switch ($cmd) {
         }
         $oldF = collect($old);
         $newF = collect($new);
+        // custom.php 是客户的扩展入口：空白包（pack）必须带，增量包必须不带。
+        // 两边都剔除，否则会被 array_diff 算成「本版删除了 custom.php」，
+        // 升级时直接把客户写好的扩展代码删掉。
+        unset($oldF['custom.php'], $newF['custom.php']);
         // 用 sha256 判定变更（与 manifest.hashes 同一算法，避免两套哈希口径）
         $oldH = sha256Map($oldF);
         $changed = [];

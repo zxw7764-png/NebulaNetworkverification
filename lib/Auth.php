@@ -67,6 +67,15 @@ class Auth
             'updated_at'     => $now,
         ]);
 
+        Event::emit('user.register', [
+            'user_id'     => $uid,
+            'username'    => $username,
+            'email'       => $email,
+            'ip'          => $ip,
+            'software_id' => (int) Software::currentId(),
+            'time'        => $now,
+        ]);
+
         return [
             'ok'   => true,
             'code' => 0,
@@ -135,6 +144,8 @@ class Auth
             'last_login_time' => time(),
             'updated_at'      => time(),
         ], 'id = :id', ['id' => $user['id']]);
+
+        self::emitLogin($user, 'password');
 
         return ['ok' => true, 'code' => 0, 'msg' => '登录成功', 'user' => $user];
     }
@@ -397,7 +408,33 @@ class Auth
             'updated_at'      => time(),
         ], 'id = :id', ['id' => (int) $user['id']]);
 
-        return self::userById((int) $user['id']) ?? $user;
+        $fresh = self::userById((int) $user['id']) ?? $user;
+        self::emitLogin($fresh, LoginMethod::current());
+
+        return $fresh;
+    }
+
+    /**
+     * 派发 user.login 事件
+     * ------------------------------------------------------------------
+     * 所有登录成功路径都汇聚到这里，客户只监听一个事件名就能覆盖
+     * 密码登录 / 用户名+激活码 / 纯激活码 三种方式。
+     * 事件在「失败计数已清零、登录时间已写入」之后派发，payload 里是登录后的最新状态。
+     */
+    private static function emitLogin(array $user, string $method): void
+    {
+        Event::emit('user.login', [
+            'user_id'     => (int) $user['id'],
+            'username'    => (string) $user['username'],
+            'nickname'    => (string) ($user['nickname'] ?: $user['username']),
+            'ip'          => Util::ip(),
+            'method'      => $method,
+            'group_id'    => (int) $user['group_id'],
+            'vip_expire'  => (int) $user['vip_expire'],
+            'points'      => (int) $user['points'],
+            'software_id' => (int) ($user['software_id'] ?? 0),
+            'time'        => time(),
+        ]);
     }
 
     /**

@@ -27,7 +27,7 @@ define('NB_START', microtime(true));
 
 // 后台前端静态资源版本号（用于缓存刷新，改前端后递增即可）
 if (!defined('NB_VERSION')) {
-    define('NB_VERSION', '2.66.4.14');
+    define('NB_VERSION', '2.66.4.15');
 }
 
 // ------------------------------------------------------------------
@@ -179,6 +179,7 @@ require_once NB_ROOT . '/lib/UiTemplate.php';
 require_once NB_ROOT . '/lib/SessionCookie.php';
 require_once NB_ROOT . '/lib/FileGuard.php';
 require_once NB_ROOT . '/lib/UpdatePackage.php';
+require_once NB_ROOT . '/lib/Event.php';
 require_once NB_ROOT . '/lib/Backup.php';
 require_once NB_ROOT . '/lib/Health.php';
 require_once NB_ROOT . '/lib/SecReport.php';
@@ -321,6 +322,14 @@ if ($adminDirName === '' || !is_file(NB_ROOT . '/' . $adminDirName . '/AdminAuth
     $adminDirName = 'admin';
 }
 require_once NB_ROOT . '/' . $adminDirName . '/AdminAuth.php';
+
+// ------------------------------------------------------------------
+// 客户自定义扩展（custom.php）
+// ------------------------------------------------------------------
+// 必须放在这里而不是 lib 加载块末尾：custom.php 里可能用到 Tenant / Totp /
+// RuntimePolicy 等后面才 require 的类，放早了客户代码会「类不存在」。
+// 内部已兜住所有 Throwable，客户写坏语法也不会白屏。
+Event::boot();
 
 // ------------------------------------------------------------------
 // 全局异常与错误处理

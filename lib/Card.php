@@ -219,6 +219,25 @@ class Card
 
             $fresh = Database::one('SELECT * FROM ' . Database::t('users') . ' WHERE id = ?', [$user['id']]);
 
+            // 事务已提交后再派发：监听器失败绝不会回滚掉一次真实的激活
+            Event::emit('card.activate', [
+                'user_id'     => (int) $user['id'],
+                'username'    => (string) $user['username'],
+                'card_id'     => (int) $card['id'],
+                'code'        => (string) $card['code'],
+                'type'        => $type,
+                'type_name'   => self::typeName($type),
+                'duration'    => $dur,
+                'group_id'    => (int) $fresh['group_id'],
+                'vip_expire'  => (int) $fresh['vip_expire'],
+                'points'      => (int) $fresh['points'],
+                'max_devices' => (int) $fresh['max_devices'],
+                'software_id' => (int) ($card['software_id'] ?? 0),
+                'ip'          => Util::ip(),
+                'detail'      => $detail,
+                'time'        => $now,
+            ]);
+
             return [
                 'ok'   => true,
                 'code' => 0,
