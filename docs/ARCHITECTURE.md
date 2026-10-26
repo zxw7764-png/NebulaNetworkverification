@@ -2,14 +2,14 @@
 
 > 📚 本文属 Nebula 文档中心，主索引见 [README.md](../README.md)，完整指南见 [GUIDE.md](GUIDE.md)，**许可条款见 [LICENSE](../LICENSE)**；
 > 其他文档：[API 接口](API.md) · [报文示例](API_RAW_EXAMPLES.md) · [界面模板](TEMPLATE.md) · [加密客户端生成器](SEALER.md) ·
-> [C++ SDK 接入] · [C++ SDK 加固] · [Python SDK]（三套 SDK 文档随仓库发行处（Releases）sdk.zip / sdk-py.zip 提供）
+> [C++ SDK 接入] · [C++ SDK 加固] · [Python SDK]（三套 SDK 文档随仓库发行处（Releases）的 SDK 分发包提供）
 
 本文档描述 Nebula 网络验证系统的整体架构、请求生命周期、关键链路时序与安全设计，
 面向二次开发、安全审计与私有化部署运维人员。
 
 - **代码版本**：以 `lib/bootstrap.php` 的 `NB_VERSION` 为唯一真源，本文不写具体版本号（避免漂移）
 - **运行环境**：PHP ≥ 8.0（`str_contains` / `str_starts_with` 要求 8.0）、MySQL 5.7+ / MariaDB 10.3+
-- **协议真源**：服务端 [`lib/Handshake.php`](../lib/Handshake.php) + [`lib/Crypto.php`](../lib/Crypto.php) 与客户端 `sdk/nebula/client/handshake.hpp`（随仓库发行处 `sdk.zip` 分发），二者与 [`docs/API.md`](API.md) 严格对齐
+- **协议真源**：服务端 [`lib/Handshake.php`](../lib/Handshake.php) + [`lib/Crypto.php`](../lib/Crypto.php) 与客户端 `nebula/client/handshake.hpp`（随仓库发行处 `sdk.zip` 分发），二者与 [`docs/API.md`](API.md) 严格对齐
 
 ---
 
@@ -34,10 +34,10 @@
 ```mermaid
 flowchart TD
     subgraph CL["客户端"]
-        C1["C++ SDK（sdk/nebula/）"]
-        C2["Python SDK（sdk-py/）"]
+        C1["C++ SDK（header-only）"]
+        C2["Python SDK"]
         C3["手写协议对接"]
-        C4["加密客户端生成器（sealer/）"]
+        C4["加密客户端生成器"]
     end
 
     subgraph ENTRY["入口层（每个入口独立鉴权）"]
@@ -183,7 +183,7 @@ sequenceDiagram
 任何可复用的对称机密（握手密钥对是临时的，私钥不落盘），无法解密历史流量或伪造响应。
 
 > 协议唯一参照：服务端 [`lib/Handshake.php`](../lib/Handshake.php) +
-> [`lib/Crypto.php`](../lib/Crypto.php)，客户端 `sdk/nebula/client/handshake.hpp`
+> [`lib/Crypto.php`](../lib/Crypto.php)，客户端 `nebula/client/handshake.hpp`
 > （随仓库发行处 `sdk.zip` 分发）；字段详见 [`docs/API.md`](API.md)。
 
 > 客户端离线校验的票面与验签步骤见第 5 节；协议字段见 [`docs/API.md`](API.md) 的
@@ -365,13 +365,13 @@ sequenceDiagram
 
 ### 9.1 在线更新
 
-后台「系统更新」对接 `update-system` 版本服务器：
+后台「系统更新」对接独立的版本服务器：
 
 ```mermaid
 sequenceDiagram
     autonumber
     participant AD as 管理后台
-    participant UP as update-system
+    participant UP as 版本服务器
     participant FS as 文件系统
 
     AD->>UP: 检查更新（当前 NB_VERSION）
@@ -392,9 +392,9 @@ sequenceDiagram
 | 健康检查 | `lib/Health.php` | 环境与依赖自检 |
 | 运行时防护 | `lib/RuntimePolicy.php`、`lib/RuntimeGuard.php`、`lib/RuntimeRiskEngine.php`、`lib/RuntimeEventService.php` | 策略匹配下发（软件级 > 全局 > 内置默认）、心跳遥测合并、事件风险评估与自动处置 |
 
-### 9.2 加密客户端生成器（`sealer/`）
+### 9.2 加密客户端生成器
 
-`sealer/` 是随仓库分发的离线打包工具，把客户自有的 Windows 程序（exe）封装为 **Nebula 加载壳**：
+加密客户端生成器是随发行包提供的离线打包工具，把客户自有的 Windows 程序（exe）封装为 **Nebula 加载壳**：
 
 - **打包流程**：选目标 exe → 选加载壳（32/64 位）→ 填写后台地址 / 软件标识 / 响应公钥 / 证书指纹 / 功能密钥 → 一键生成成品；
 - **载荷加密**：原始 exe 以 AES-256-GCM 加密后追加在成品尾部，登录成功且拿到功能密钥后才解密启动；
@@ -413,11 +413,11 @@ sequenceDiagram
 - **更新压缩包制作**（每次大改动发版必须执行，三步）：
   1. **空白安装包**（全新安装分发）：`php deploy/make_release.php pack --src=yanzheng/ --out=releases/<版本> --version=<版本>`
      → `releases/<版本>/nebula-<版本>.zip` + `MANIFEST.txt`（逐文件 md5）
-  2. **在线更新包**（update-system 发布、存量站点升级）：`python update-system/pack.py <版本号> <站点根目录> [输出.zip]`
+  2. **在线更新包**（版本服务器侧发布、存量站点升级）：在版本服务器上执行 `python pack.py <版本号> <站点根目录> [输出.zip]`
      → zip 内含 `manifest.json`（product / version / min_version / schema_version / channel / download_url / sha256 / files）+ 全量文件，并输出 SHA-256 校验值
-3. **发布**：把更新包路径与 SHA-256 填入 `update-system/releases/<版本>/manifest.json`，
-   执行 `php update-system/deploy_add_version.php`（或 update-system 后台「版本发布」）写入更新库。
-   **生产环境直接用远程 API 上传**（远程版本服务器 `https://nebula.baigee.fun`，update-system 部署在**根目录**）：
+3. **发布**：把更新包路径与 SHA-256 填入版本服务器的 `releases/<版本>/manifest.json`，
+   执行 `php deploy_add_version.php`（或版本服务器后台「版本发布」）写入更新库。
+   **生产环境直接用远程 API 上传**（远程版本服务器 `https://nebula.baigee.fun`，版本服务部署在**根目录**）：
    `curl -u <发布账号>:<密码> -F "update_file=@update_<版本>.zip" https://nebula.baigee.fun/api/upload.php`
    （账号密码属内部凭据，见 `.catpaw/skills/nebula-development/SKILL.md`，不写入公开文档）
    接口会自动解析包内 manifest、落盘 `releases/<版本>/update.zip` 并写入版本库（见 `.catpaw/skills/nebula-development/SKILL.md`）

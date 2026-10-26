@@ -13,9 +13,9 @@ POST http://<域名>/api/index.php?action=<接口名>
 
 > ### 不想手写协议？
 >
-> **C++ SDK 可在仓库发行处（Releases）下载 `sdk.zip`**（header-only），把 `sdk/nebula/` 目录 + `nebula_sdk.hpp` 一起拖进项目即可，  
+> **C++ SDK 可在仓库发行处（Releases）下载 `sdk.zip`**（header-only），把 `nebula/` 目录 + `nebula_sdk.hpp` 一起拖进项目即可，  
 > 无需 OpenSSL / libcurl（用系统自带的 `bcrypt.dll` / `winhttp.dll`，仅 Windows + MSVC）。
-> 配置只需改一个文件：`sdk/nebula/client/config.hpp`。
+> 配置只需改一个文件：`nebula/client/config.hpp`。
 >
 > ```cpp
 > #include "nebula_sdk.hpp"
@@ -842,7 +842,7 @@ C++ SDK 已内置工具：`Bcrypt::fileHashHex(路径, 是否SHA256)` 与 `Bcryp
 `device_fp` 让客户端再上报**多个硬件组件**的特征串，服务端据此做加权指纹校验，  
 用于识别机器码伪造、模拟器/虚拟机和一机多号。
 
-> C++ SDK（`sdk/nebula_sdk.hpp`，配置区在 `sdk/nebula/client/config.hpp`）**已内置自动采集**（WMI 硬件序列号取哈希 + 主网卡裸 MAC，
+> C++ SDK（`nebula_sdk.hpp`，配置区在 `nebula/client/config.hpp`）**已内置自动采集**（WMI 硬件序列号取哈希 + 主网卡裸 MAC，
 > `device_name` 自动取真实电脑主机名），使用 SDK 时无需手动构造本字段。
 
 **上报格式**（`login` 请求中的可选字段，对象或 JSON 字符串均可）：

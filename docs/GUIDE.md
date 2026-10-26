@@ -11,10 +11,10 @@
 | [docs/ARCHITECTURE.md](ARCHITECTURE.md)           | 架构设计文档（分层架构 / 请求生命周期 / 关键链路时序图 / 安全设计对照）                                |
 | [docs/API.md](API.md)                             | 客户端 API 完整接口文档（协议、加签、各接口字段、离线宽限协议）                                      |
 | [docs/API\_RAW\_EXAMPLES.md](API_RAW_EXAMPLES.md) | 请求 / 响应原始报文示例（手写协议对接逐字节参照）                                              |
-| sdk/SDK.md（随 SDK 分发包提供）                             | C++ SDK 接入文档（初始化 / 登录 / 心跳 / 内置提示 / 完整性自校验）                             |
-| sdk/SDK_PROTECTION.md（随 SDK 分发包提供）                  | C++ SDK 客户端加固指南（壳标记 / 代码混淆 / 反调试 / 反虚拟机，**默认关闭，按需开启**）                  |
-| sdk-py/README.md（随 SDK 分发包提供）                    | Python SDK 接入文档（协议同规格 / 内置 Pygame 登录界面 / 完整性自校验 / 自动更新 / 功能密钥 NF1）      |
-| sdk-c#/NebulaSDK.md（随 SDK 分发包提供）                    | C# SDK 接入文档（.NET 10 / WinForms；登录 / 心跳 / 离线宽限 / 功能密钥 NF1 / 运行时防护与字符串混淆） |
+| `SDK.md`（随 C++ SDK 分发包提供）                             | C++ SDK 接入文档（初始化 / 登录 / 心跳 / 内置提示 / 完整性自校验）                             |
+| `SDK_PROTECTION.md`（随 C++ SDK 分发包提供）                  | C++ SDK 客户端加固指南（壳标记 / 代码混淆 / 反调试 / 反虚拟机，**默认关闭，按需开启**）                  |
+| `README.md`（随 Python SDK 分发包提供）                    | Python SDK 接入文档（协议同规格 / 内置 Pygame 登录界面 / 完整性自校验 / 自动更新 / 功能密钥 NF1）      |
+| `NebulaSDK.md`（随 C# SDK 分发包提供）                    | C# SDK 接入文档（.NET 10 / WinForms；登录 / 心跳 / 离线宽限 / 功能密钥 NF1 / 运行时防护与字符串混淆） |
 | [docs/TEMPLATE.md](TEMPLATE.md)                   | 界面模板开发文档（目录规范 / 小游戏 / 交互音效 / 布局与自定义区块）                                  |
 | [docs/SEALER.md](SEALER.md) | 加密客户端生成器说明（NebulaSealClient / 加载壳 / VMProtect 壳加固） |
 | [LICENSE](../LICENSE) | **使用许可协议**（允许 / 禁止范围、违法用途禁止、SDK 分发豁免、数据合规、第三方组件） |
@@ -55,8 +55,8 @@
 | 🔄 协议升级    | 3.0 静态密钥信封已完全移除；会话失效（5002/5004）SDK 自动重握手，密钥不再需要人工轮换                                                                        |
 | 🏢 多租户     | 软件归属代理商（owner_agent_id），管理员可绑定为租户管理员（agent_id）——总后台仅可见归属软件及其用户/卡密/设备数据，越权写操作直接拒绝，默认拒绝式隔离                                   |
 | 🩺 安全审计    | 每日自动巡检（cron）：暴力破解嫌疑（同 IP）、撞库嫌疑（同账号）、密钥重置追踪、代理商卡密突增，异常写报告文件并记日志                                                             |
-| 📦 在线更新    | 对接 update-system 版本服务器，后台一键自动下载、校验、备份并安装更新包；支持强制更新封锁                                                                       |
-| 📦 加密客户端生成器 | `sealer/` 一键把 exe 打包为 Nebula 加载壳，载荷 AES-256-GCM 加密，配置内嵌镜像 + VMProtect 压缩；详见 [docs/SEALER.md](SEALER.md) |
+| 📦 在线更新    | 对接独立的版本服务器，后台一键自动下载、校验、备份并安装更新包；支持强制更新封锁                                                                       |
+| 📦 加密客户端生成器 | 加密客户端生成器一键把 exe 打包为 Nebula 加载壳，载荷 AES-256-GCM 加密，配置内嵌镜像 + VMProtect 压缩；详见 [docs/SEALER.md](SEALER.md) |
 
 ---
 
@@ -180,9 +180,8 @@ Nebula网络验证/
 │   ├── _cli_guard.php      CLI 守卫（install/ 下脚本仅限命令行执行）
 │   ├── clear_logs.php      日志清理工具（--dry-run 预演 / --yes 执行）
 │   └── nginx.conf.example  Nginx 部署配置示例
-├── sdk/ · sdk-py/ · sdk-c#/      三套 SDK 分发包（C++ / Python / C#）
-│                              ⚠ 源码不入库，发行版随仓库 Releases 提供（接入文档随包），
-│                              接入文档随包内提供（SDK.md / SDK_PROTECTION.md / README.md / NebulaSDK.md）
+├── （SDK 分发包，不入库）         三套 SDK（C++ / Python / C#），随仓库 Releases 提供
+│                              ⚠ 接入 / 加固 / Python / C# 各一份文档，随包内提供
 ├── docs/
 │   ├── ARCHITECTURE.md     架构设计文档（分层架构 / 关键链路时序图 / 安全设计对照）
 │   ├── API.md              完整接口文档
@@ -448,10 +447,10 @@ curl -X POST "http://127.0.0.1/admin/index.php?action=dashboard" \
 
 三套 SDK（C++ / Python / C#）发行版可在**仓库发行处（Releases）下载**，含完整接入文档与示例工程。
 
-C++ SDK 为 header-only：**把整个 `sdk/` 目录（聚合入口 `nebula_sdk.hpp` + `nebula/` 子模块）拖进项目即可**，无需预编译。  
-📘 完整接入文档见包内 **`sdk/SDK.md`**（初始化/登录/心跳/内置提示/完整性自校验/离线宽限全说明）。  
-🛡️ 需要防破解时再看包内 **`sdk/SDK_PROTECTION.md`**：同目录的  
-`sdk/nebula_protect.hpp` 提供壳标记（VMProtect/Themida）、代码混淆、反调试/反虚拟机检测，  
+C++ SDK 为 header-only：**把分发包内的整个 SDK 目录（聚合入口 `nebula_sdk.hpp` + `nebula/` 子模块）拖进项目即可**，无需预编译。  
+📘 完整接入文档见包内 **`SDK.md`**（初始化/登录/心跳/内置提示/完整性自校验/离线宽限全说明）。  
+🛡️ 需要防破解时再看包内 **`SDK_PROTECTION.md`**：同目录的  
+`nebula_protect.hpp` 提供壳标记（VMProtect/Themida）、代码混淆、反调试/反虚拟机检测，  
 **默认全部关闭**，加一行 `NEBULA_HARDEN=1` 即可全开。
 
 ```cpp
@@ -665,13 +664,13 @@ https://你的域名/cron.php?key=<security.cron_secret，或自动生成的 log
 
 ### 系统更新
 
-后台「系统 → 系统更新」页面对接独立的 update-system 版本服务器，实现一键自动更新。
+后台「系统 → 系统更新」页面对接独立的版本服务器，实现一键自动更新。
 
 - **版本检查**：每次进入后台自动检查最新版本（6 小时缓存，可手动刷新）。
 - **一键更新**：自动下载更新包 → SHA-256 校验 → 备份当前文件 → 解压覆盖 → 更新版本号。
 - **强制更新**：当当前版本低于服务端设定的最低支持版本时，后台弹出不可关闭的封锁弹窗，必须更新后才能使用。
 - **保护目录**：`config/`、`logs/`、`data/`、`uploads/` 等目录不会被更新覆盖。
-- **更新服务地址**：后台「系统设置 → 基础设施」中可配置 `update_server`（**默认留空**，未配置时更新检查与一键更新不生效；需自行部署 update-system 版本服务器后填入地址）。
+- **更新服务地址**：后台「系统设置 → 基础设施」中可配置 `update_server`（**默认留空**，未配置时更新检查与一键更新不生效；需自行部署版本服务器后填入地址）。
 
 > 也可通过后台「版本管理」动态配置，优先级高于配置文件。
 
