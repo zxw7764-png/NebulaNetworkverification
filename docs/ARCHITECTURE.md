@@ -1,7 +1,7 @@
 # Nebula 网络验证系统 · 架构设计文档
 
 > 📚 本文属 Nebula 文档中心，主索引见 [README.md](../README.md)，完整指南见 [GUIDE.md](GUIDE.md)，**许可条款见 [LICENSE](../LICENSE)**；
-> 其他文档：[API 接口](API.md) · [报文示例](API_RAW_EXAMPLES.md) · [界面模板](TEMPLATE.md) · [加密客户端生成器](SEALER.md) ·
+> 其他文档：[API 接口](API.md) · [界面模板](TEMPLATE.md) · [加密客户端生成器](SEALER.md) · 报文示例（随发行包提供 `docs/API_RAW_EXAMPLES.md`）·
 > [C++ SDK 接入] · [C++ SDK 加固] · [Python SDK]（三套 SDK 文档随仓库发行处（Releases）的 SDK 分发包提供）
 
 本文档描述 Nebula 网络验证系统的整体架构、请求生命周期、关键链路时序与安全设计，
@@ -357,7 +357,7 @@ sequenceDiagram
 ```
 
 微信 V3 回调的验签、解密与应答规范见 [`docs/API.md`](API.md) 的「支付回调（异步通知）」章节，
-协议级单测见 [`tests/wechat_v3_notify_test.php`](../tests/wechat_v3_notify_test.php)。
+协议级单测见 `tests/wechat_v3_notify_test.php`（作者本地测试脚本，不在仓库内，随发行包也不分发）。
 
 ---
 
@@ -406,7 +406,7 @@ sequenceDiagram
 
 ### 9.3 发布与迁移
 
-- **发布工具**：`deploy/make_release.php`（仅开发站），提供 `pack` / `diff` 两个子命令，
+- **发布工具**：`deploy/make_release.php`（仅开发站；作者本地工具，不在仓库内），提供 `pack` / `diff` 两个子命令，
   内置敏感文件硬阻断 `assertNoSensitive`
 - **空白包 vs 更新包**：`install/migrate_*.php` **不随空白包分发**（`.gitignore` 忽略），
   全新安装由 `schema.sql` 直接建库到基线版本；升级迁移脚本随**更新包**分发

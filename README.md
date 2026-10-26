@@ -15,11 +15,11 @@
 | --- | --- |
 | **[docs/GUIDE.md](docs/GUIDE.md)** | **完整使用指南**（功能一览 / 快速部署 / 管理后台 / 客户端对接 / 常见问题） |
 | [docs/API.md](docs/API.md) | 客户端 API 完整接口文档（3.1.3 协议、握手、各接口字段、离线宽限协议） |
-| [docs/API_RAW_EXAMPLES.md](docs/API_RAW_EXAMPLES.md) | 请求 / 响应原始报文示例（手写协议对接逐字节参照） |
+| `docs/API_RAW_EXAMPLES.md`（随发行包提供） | 请求 / 响应原始报文示例（手写协议对接逐字节参照；仓库内不收录） |
 | [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | 架构设计文档（分层架构 / 请求生命周期 / 安全设计对照） |
 | [docs/TEMPLATE.md](docs/TEMPLATE.md) | 界面模板开发文档（目录规范 / 小游戏 / 布局与自定义区块） |
 | [docs/SEALER.md](docs/SEALER.md) | 加密客户端生成器说明（NebulaSealClient / 加载壳 / VMProtect 壳加固） |
-| [docs/OPS.md](docs/OPS.md) | **运维手册**（上线检查清单 / 权限基线 / 定时任务 / 升级与回滚 / 备份恢复 / 故障排查 / 安全事件处置） |
+| `docs/OPS.md`（随发行包提供） | **运维手册**（上线检查清单 / 权限基线 / 定时任务 / 升级与回滚 / 备份恢复 / 故障排查 / 安全事件处置）；官网文档中心可在线阅读 |
 | [docs/EXTENDING.md](docs/EXTENDING.md) | **扩展开发指南**（在 `custom.php` 里监听注册/登录/激活/封禁/到期事件，不改核心文件且升级不覆盖） |
 | [LICENSE](LICENSE) | **使用许可协议**（允许 / 禁止范围、违法用途禁止、SDK 分发豁免、数据合规、第三方组件） |
 

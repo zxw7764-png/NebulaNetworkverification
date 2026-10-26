@@ -1,7 +1,7 @@
 # Nebula 扩展开发指南
 
 > 📚 本文属 Nebula 文档中心，主索引见 [README.md](../README.md)，**许可条款见 [LICENSE](../LICENSE)**；
-> 相关文档：[架构设计](ARCHITECTURE.md) · [运维手册](OPS.md) · [客户端 API](API.md) · [界面模板](TEMPLATE.md)
+> 相关文档：[架构设计](ARCHITECTURE.md) · [客户端 API](API.md) · [界面模板](TEMPLATE.md) · 运维手册（随发行包提供 `docs/OPS.md`，官网文档中心可在线阅读）
 
 ## 0. 这份文档解决什么问题
 
@@ -207,7 +207,7 @@ Event::on('user.expire', function (array $d) {
 });
 ```
 
-再用定时任务（见 [OPS.md](OPS.md)）每分钟扫这个文件去发消息。
+再用定时任务（见发行包内 `docs/OPS.md` 的「定时任务」一节）每分钟扫这个文件去发消息。
 
 ### 3.5 自己造事件，给别的代码用
 
