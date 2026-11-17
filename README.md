@@ -1,6 +1,6 @@
 # Nebula 网络验证
 
-> **当前版本：2.66.4.13**（版本变更说明随发行处的更新包提供，仓库不再内置 CHANGELOG）
+> **当前版本：2.66.4.16**（版本变更说明随发行处的更新包提供，仓库不再内置 CHANGELOG）
 
 一套基于 PHP + MySQL 的网络验证（授权）系统后端，提供客户端 API 与管理后台 API。
 通信协议为 **Nebula 3.1.3**：ECDH P-256 会话握手 + AES-256-GCM 信封 + seq 防重放，客户端零静态对称机密。
@@ -91,7 +91,7 @@ http(s)://你的域名/install/install.php
 
 **立即手动删除整个 `install/` 目录**——原因：
 
-- 向导内置安全守卫：检测到 `install/install.lock` 即拒绝一切重装提交，防止覆盖 `config.php`、重建管理员；
+- 向导内置安全守卫：检测到安装锁（`install/install.lock` 或 `config/install.lock`）即拒绝一切重装提交，防止覆盖 `config.php`、重建管理员；
 - 但 `install/` 目录若长期留在线上，仍存在被利用 / 被重装的风险。
 
 删除方式任选其一：
@@ -103,15 +103,19 @@ rm -rf install
 
 或直接在文件管理器中删除 `install/` 文件夹。删除后再次访问 `install/install.php` 将返回 404 / 403，表示防护生效。
 
+> 安装锁的**正本**存放在 `config/install.lock`（向导安装时自动写入），删除 `install/` 目录**不影响站点前台、后台与发卡的正常访问**。
+> 如需重新安装，请**同时删除** `install/install.lock` 与 `config/install.lock` 两个锁文件。
+> 2.66.4.16 之前安装的存量站点升级后，执行 `php install/migrate.php run` 可自动补写正本锁。
+
 ### 8. 访问管理后台
 
-打开浏览器，访问**安装时设置的后台入口路径**（默认 `nbXXXXXX`），并携带入口 token：
+打开浏览器，访问**安装时设置的后台入口路径**（默认形如 `nbXXXXXX`），并携带入口密钥：
 
 ```
-http(s)://你的域名/admin/<后台路径>/?entry=<admin_entry_key>
+http(s)://你的域名/<后台路径>/?k=<admin_entry_key>
 ```
 
-`<admin_entry_key>` 即安装时自动生成并写入 `config/config.php` 的 `admin_entry_key`（也可在数据库 `nb_settings` 表的 `skey = 'admin_entry_key'` 查到）。登录后建议到后台「系统设置」修改默认密码、并按需调整后台目录名以增强安全。
+`<admin_entry_key>` 即安装时自动生成的后台入口 token（优先存于数据库 `nb_settings` 表的 `skey = 'admin_entry_key'`，回落读取 `config/config.php`）。首次访问成功后写入 cookie，后续免带。登录后建议到后台「系统设置」修改默认密码、并按需调整后台目录名以增强安全。
 
 ## 📄 许可证
 
