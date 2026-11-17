@@ -30,8 +30,8 @@ SessionCookie::init(
     'admin.cookie_secure'
 );
 
-// 未安装时引导到安装向导
-if (!is_file(NB_ROOT . '/install/install.lock')) {
+// 未安装时引导到安装向导（锁的正本在 config/install.lock，install/ 装完即删）
+if (!is_file(NB_ROOT . '/install/install.lock') && !is_file(NB_ROOT . '/config/install.lock')) {
     header('Location: ../install/install.php');
     exit;
 }

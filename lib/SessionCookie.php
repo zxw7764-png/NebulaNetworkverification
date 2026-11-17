@@ -60,8 +60,41 @@ final class SessionCookie
         self::$name = preg_replace('/[^A-Za-z0-9_\-]/', '', $name) ?: $defaultName;
         self::$issued = false;
 
-        // secure 标记：配置显式开启，或请求本身就是 HTTPS
-        self::$secure = (bool) Config::get($secureKey, false) || !empty($_SERVER['HTTPS']);
+        // secure 标记：跟随请求的真实协议自适应（不再「默认恒加」）。
+        //   HTTPS（直连或反代透传）→ 加 Secure；
+        //   纯 HTTP → 不加。若 HTTP 站点也加 Secure，浏览器会直接丢弃该 Cookie，
+        //   造成「登录成功却被踢回登录页」的死循环 —— token 在响应体里下发，
+        //   但 Cookie 模式的前端不落 localStorage，下一个请求就 1002。
+        //   （Gitee issue IKVRNI：后台登录成功后又跳回登录界面）
+        // admin.cookie_secure=false 可显式强制关闭 Secure（仅特殊场景需要）。
+        self::$secure = (bool) Config::get($secureKey, true) && self::requestIsHttps();
+    }
+
+    /**
+     * 判断本次请求是否经由 HTTPS 到达 PHP（含常见反向代理透传场景）
+     * 覆盖：直连 HTTPS（$_SERVER['HTTPS']）、宝塔/nginx 反代（X-Forwarded-Proto）、
+     * Cloudflare（CF-Visitor JSON）、PORT 443、REQUEST_SCHEME。
+     */
+    private static function requestIsHttps(): bool
+    {
+        $https = (string) ($_SERVER['HTTPS'] ?? '');
+        if ($https !== '' && strcasecmp($https, 'off') !== 0) {
+            return true;
+        }
+        if (strcasecmp((string) ($_SERVER['HTTP_X_FORWARDED_PROTO'] ?? ''), 'https') === 0) {
+            return true;
+        }
+        $cf = (string) ($_SERVER['HTTP_CF_VISITOR'] ?? '');
+        if ($cf !== '' && stripos($cf, '"https"') !== false) {
+            return true;
+        }
+        if ((string) ($_SERVER['REQUEST_SCHEME'] ?? '') === 'https') {
+            return true;
+        }
+        if ((int) ($_SERVER['SERVER_PORT'] ?? 0) === 443) {
+            return true;
+        }
+        return false;
     }
 
     private static bool $secure = false;

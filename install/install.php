@@ -20,7 +20,10 @@ session_start();
 $root        = dirname(__DIR__);
 $configFile  = $root . '/config/config.php';
 $schemaFile  = __DIR__ . '/schema.sql';
-$installed   = is_file($root . '/install/install.lock');
+// 安装锁双份判断：install/install.lock（历史位置）+ config/install.lock（持久正本）。
+// 文档要求装完删除整个 install/ 目录，锁的正本必须放在目录之外，
+// 否则删目录会被误判为「未安装」，全站跳转到已不存在的 install.php（issue IKVRNI）。
+$installed   = is_file($root . '/install/install.lock') || is_file($root . '/config/install.lock');
 
 // 安全：生产（已安装）环境不把报错细节输出到浏览器；仅全新安装期开启便于排错
 ini_set('display_errors', $installed ? '0' : '1');
@@ -63,7 +66,7 @@ function nbActivateLicense(string $server, string $key, string $domain): array
 // 安全守卫：已安装的系统直接拒绝一切提交（防止重装覆盖 config.php / 重建管理员）
 if ($installed && $_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') !== 'activate_license') {
     http_response_code(403);
-    exit('系统已安装，如需重装请先删除 install/install.lock');
+    exit('系统已安装，如需重装请先删除 install/install.lock 与 config/install.lock 两个锁文件');
 }
 
 // ------------------------------------------------------------------
@@ -474,6 +477,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 }
 
                 file_put_contents($root . '/install/install.lock', date('Y-m-d H:i:s'));
+                // 持久安装锁（正本）：install/ 目录按文档要求装完即删，
+                // 锁必须留一份在目录之外（config/ 受 .htaccess/nginx deny 保护），
+                // 这样「删除 install 目录」不会误触发安装向导跳转（issue IKVRNI）。
+                @file_put_contents($root . '/config/install.lock', date('Y-m-d H:i:s'));
 
                 // 自动激活：安装完成立即绑定当前域名（失败不阻断，进入宽限模式）
                 $_SESSION['license_activation'] = null;
@@ -876,7 +883,7 @@ h3 { font-size: 15px; margin-bottom: 12px; color: #f1f5f9; }
 
         <?php else: ?>
             <div class="alert warn">
-                系统已安装。如需重新安装，请删除 <code>install/install.lock</code> 文件。
+                系统已安装。如需重新安装，请删除 <code>install/install.lock</code> 与 <code>config/install.lock</code> 两个锁文件。
             </div>
             <div class="alert err">⚠ 请务必删除 <code>install</code> 目录。</div>
         <?php endif; ?>

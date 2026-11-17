@@ -47,6 +47,7 @@ const MIGRATIONS = [
     '2.65.11' => ['migrate_key_rotation.php', 'migrate_tenant.php'],
     '2.65.12' => ['migrate_online_stats.php'],
     '2.65.13' => ['migrate_feature_key.php'],
+    '2.66.4.16' => ['migrate_install_lock.php'],
 ];
 
 function currentSchemaVersion(): string

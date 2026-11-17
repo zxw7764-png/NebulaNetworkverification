@@ -366,11 +366,12 @@ return [
         // 会话 Cookie 名（改个不显眼的名字，降低被定向攻击的价值）
         'cookie_name' => 'nb_admin_sid',
 
-        // Cookie 是否只走 HTTPS（Least-privilege 默认：宁可默认收紧）。
-        // 说明：SessionCookie 初始化时会额外用 $_SERVER['HTTPS'] 自适应，
-        //      即请求本身是 HTTPS 时无论这里是否开启都会加 Secure 标记；
-        //      此默认 true 用于兜底「站点仅 HTTP / 反向代理未透传 HTTPS」的兜底场景，
-        //      避免会话 Cookie 被明文链路嗅探。若你的后台确实需要跑纯 HTTP，请改成 false。
+        // Cookie 是否只走 HTTPS。
+        // true（默认）= 跟随请求的真实协议自适应：HTTPS（直连或反代透传
+        //              X-Forwarded-Proto / CF-Visitor / 443 端口）时加 Secure；
+        //              纯 HTTP 时不加 —— 否则浏览器直接丢弃该 Cookie，
+        //              造成「登录成功却被踢回登录页」的死循环（issue IKVRNI）。
+        // false        = 强制不加 Secure（仅特殊调试场景需要）。
         'cookie_secure' => true,
 
         // 说明：这里刻意【不提供】默认管理员账号/密码。

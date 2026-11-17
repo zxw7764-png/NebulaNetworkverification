@@ -221,7 +221,7 @@ Nebula网络验证/
 2. 确保 `config/` 与 `logs/` 目录**可写**
 3. 浏览器访问 `http://你的域名/install/install.php`
 4. 按向导填写数据库信息与管理员账号
-5. 安装完成后**立即删除 `install` 目录**
+5. 安装完成后**立即删除 `install` 目录**（安装锁正本已存于 `config/install.lock`，删除 install 目录不影响站点访问）
 6. 记录向导第 3 步显示的响应签名公钥（客户端 `kRespSignPubKey` 需要用到；3.1 起无静态对称密钥）
 
 ### 方式二：手动安装
@@ -257,7 +257,7 @@ INSERT INTO nb_admins (username, password, nickname, role, status, created_at)
 VALUES ('admin', '<bcrypt哈希>', 'admin', 1, 1, UNIX_TIMESTAMP());
 ```
 
-1. 删除 `install` 目录
+1. 在 `config/` 目录下新建空文件 `install.lock`（作为安装锁正本），然后删除 `install` 目录
 
 ### 安装后自检
 
@@ -686,7 +686,7 @@ https://你的域名/cron.php?key=<security.cron_secret，或自动生成的 log
 | 后台入口       | 修改 `config.php` 中 `admin.path`，改为不易猜测的名称   |
 | IP 白名单     | 后台仅允许固定 IP 访问（`admin.ip_whitelist_enable`） |
 | 调试开关       | 生产环境关闭 `debug` 和 `log.record_raw`          |
-| install 目录 | 安装完成后立即删除                                  |
+| install 目录 | 安装完成后立即删除（锁正本 config/install.lock 会保留）          |
 | 数据库        | 使用独立低权限账号，不要用 root                         |
 | 备份         | 定期备份数据库与 `config/config.php`               |
 
@@ -717,6 +717,22 @@ nonce 被重复使用。确保每次请求生成新的随机 nonce（≥8 位）
 **Q: 卡密生成很慢**
 
 生成 10000 张约需数秒，属正常（每张都要做唯一性检查）。如需更快可增大卡密长度或减少段数。
+
+**Q: 后台登录提示成功，随即又被踢回登录页**
+
+通常是**纯 HTTP 站点 + 会话 Cookie 带 Secure 标记**：浏览器会直接丢弃 Secure Cookie，
+登录接口虽成功（token 只在响应体里），但下一个请求就「未登录」。
+2.66.4.16 起服务端已按请求真实协议自适应（HTTPS 加 Secure、HTTP 不加）；
+旧版本临时解法：给站点启用 HTTPS，或把 `config/config.php` 里的
+`admin.cookie_secure` 改为 `false`。若升级到新版仍复现，请确认反向代理
+（如 nginx/宝塔/CDN）已透传 `X-Forwarded-Proto: https`。
+
+**Q: 删除 install 目录后，访问网站跳转到 install/install.php**
+
+旧版本的「已安装」判断依赖 `install/install.lock`，删整个目录会把锁一起删掉。
+2.66.4.16 起锁的正本写入 `config/install.lock`，删除 install 目录不再影响判断；
+存量站点执行 `php install/migrate.php run` 补写即可（或手动在 `config/` 下
+新建空的 `install.lock` 文件）。
 
 ## 许可
 
